@@ -19,6 +19,26 @@
 
 ---
 
+## 2026-10-15 GitHub Actions のテストを MySQL で動かす
+
+### 変更内容
+- PR でテストが落ちていた。原因は、テスト用 DB を MySQL に統一した（`phpunit.xml` の `DB_CONNECTION=mysql`）のに、`tests.yml` が SQLite 前提で MySQL サーバーを起動していなかったこと（`.env.example` の `DB_HOST=mysql` に接続できない）
+- `tests.yml` に MySQL 8.4 の `services` を追加し（Sail と同じバージョン）、ジョブの `env` で接続先（`127.0.0.1` / `testing` / root）を指定。ジョブの環境変数は `.env` より優先される
+- 不要になった SQLite ファイルの作成ステップを削除
+
+### 変更ファイル
+- `.github/workflows/tests.yml`
+
+### 確認したこと
+- YAML として読み込めることを確認
+- `composer.lock` に PHP 8.4（CI のバージョン）で入らないパッケージがないことを確認
+- GitHub Actions 上での実行：**未確認**（push 後に PR のチェック結果を見る）
+
+### 注意点
+- 手元（Sail）は PHP 8.5、CI は PHP 8.4。バージョン差による失敗に注意
+
+---
+
 ## 2026-10-15 作業記録の運用を追加
 
 ### 変更内容
