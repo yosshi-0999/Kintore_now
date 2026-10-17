@@ -15,6 +15,14 @@
                 <flux:navlist.group heading="Platform" class="grid">
                     <flux:navlist.item icon="home" :href="route('dashboard')" :current="request()->routeIs('dashboard')" wire:navigate>Dashboard</flux:navlist.item>
                 </flux:navlist.group>
+
+                <flux:navlist.group heading="筋トレ" class="grid">
+                    <flux:navlist.item icon="user" :href="route('mypage')" :current="request()->routeIs('users.show') && request()->route('user')?->is(auth()->user())" wire:navigate>マイページ</flux:navlist.item>
+                    <flux:navlist.item icon="pencil-square" :href="route('workouts.create')" :current="request()->routeIs('workouts.create')" wire:navigate>記録する</flux:navlist.item>
+                    <flux:navlist.item icon="bell" :href="route('plans.index')" :current="request()->routeIs('plans.*')" wire:navigate>通知プラン</flux:navlist.item>
+                    <flux:navlist.item icon="users" :href="route('users.index')" :current="request()->routeIs('users.index')" wire:navigate>ユーザー一覧</flux:navlist.item>
+                    <flux:navlist.item icon="lock-open" :href="route('permissions.index')" :current="request()->routeIs('permissions.index')" wire:navigate>閲覧許可</flux:navlist.item>
+                </flux:navlist.group>
             </flux:navlist>
 
             <flux:spacer />
