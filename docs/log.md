@@ -19,6 +19,37 @@
 
 ---
 
+## 2026-10-17 マイページに各種目の自己ベストを表示（#16）
+
+### 変更内容
+- ユーザーページの一番上（休ませる筋肉より上）に、種目ごとの自己ベストをカードで表示する。本人と閲覧許可のあるユーザーに見せる
+- 種目でまとめるため、`workouts` に `exercise_id`（NULL 可、nullOnDelete）を追加するマイグレーションを新規作成。追加前の記録はメニュー名が種目名と完全に一致するものだけ紐付ける
+- 自己ベストの計算は `PersonalBestService` に切り出した。重量 → 回数 → セット数の順に比べ、自重は重量ありより下、同じなら先に達成した記録。回数のない記録（#12 より前）と種目のない記録は対象外
+- 保存時、種目を選んでいなければメニュー名が完全一致する種目に紐付ける（`Exercise::findByExactName`）。MySQL の照合順序ではハ・バ・パが同じ扱いになるため、最後は PHP で比べる
+- フォーム：メニュー名を書き換えたら種目を付け替える／外す。種目名の候補（datalist）と「自己ベストの対象か」を入力欄の下に表示
+- `docs/database-design.md` を更新
+
+### 変更ファイル
+- `database/migrations/2026_10_17_000002_add_exercise_id_to_workouts_table.php`（新規）
+- `app/Services/PersonalBestService.php`（新規）
+- `app/Models/Exercise.php`、`app/Models/Workout.php`、`app/Actions/RecordWorkout.php`
+- `resources/views/livewire/workouts/form.blade.php`、`resources/views/livewire/users/show.blade.php`
+- `tests/Feature/PersonalBestServiceTest.php`（新規）、`tests/Feature/WorkoutFormTest.php`、`tests/Feature/UserPageTest.php`
+- `docs/database-design.md`
+
+### 確認したこと
+- `sail artisan test`：100 passed
+- `sail bin pint`：passed
+- 開発 DB で `migrate:rollback --step=1` → `migrate` を実行し、既存の記録の紐付けと down() が動くことを確認
+- ブラウザでの見た目：未確認
+
+### 注意点
+- pull 後に `sail artisan migrate` が必要
+- 名前が種目と一致しない既存の記録は、自己ベストの対象にならない
+- #13 の上に作っているため、#14 → #15 → この PR の順にマージする
+
+---
+
 ## 2026-10-17 記録の検索とページ送り（#13）
 
 ### 変更内容

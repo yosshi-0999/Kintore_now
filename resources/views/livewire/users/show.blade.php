@@ -3,6 +3,7 @@
 use App\Models\Muscle;
 use App\Models\User;
 use App\Services\MuscleRestService;
+use App\Services\PersonalBestService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Validator;
@@ -117,6 +118,7 @@ new class extends Component {
         return [
             'canView' => true,
             'isSelf' => Auth::user()->is($this->user),
+            'personalBests' => app(PersonalBestService::class)->forUser($this->user),
             'resting' => $rest->restingMuscles($this->user),
             'available' => $rest->availableMuscles($this->user),
             'suggestions' => $rest->suggestedExercises($this->user),
@@ -139,6 +141,34 @@ new class extends Component {
     @unless ($canView)
         <flux:text>このユーザーの記録は、許可されたユーザーのみ閲覧できます。</flux:text>
     @else
+        <div class="rounded-xl border border-amber-300 bg-gradient-to-br from-amber-50 to-orange-50 p-4 dark:border-amber-700 dark:from-amber-950 dark:to-orange-950">
+            <div class="flex items-center gap-2">
+                <flux:icon.trophy class="size-6 text-amber-500" />
+                <flux:heading size="lg">自己ベスト</flux:heading>
+            </div>
+
+            @if ($personalBests->isEmpty())
+                <flux:text class="mt-2">
+                    {{ $isSelf ? '「種目から入力」で種目を選んで記録すると、ここに種目ごとの自己ベストが表示されます。' : 'まだ自己ベストはありません。' }}
+                </flux:text>
+            @else
+                <div class="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                    @foreach ($personalBests as $best)
+                        <div class="rounded-lg bg-white/80 p-3 shadow-sm dark:bg-zinc-900/60" wire:key="best-{{ $best->exercise_id }}">
+                            <div class="text-sm font-semibold text-amber-700 dark:text-amber-300">{{ $best->exercise->name }}</div>
+                            <div class="mt-1 flex items-baseline gap-2">
+                                <span class="text-3xl font-bold">{{ $best->weight !== null ? $best->weight.'kg' : '自重' }}</span>
+                                @if ($best->reps !== null)
+                                    <span class="text-sm text-zinc-600 dark:text-zinc-300">× {{ $best->reps }}回 × {{ $best->sets }}セット</span>
+                                @endif
+                            </div>
+                            <div class="mt-1 text-xs text-zinc-500">{{ $best->performed_at->format('Y/m/d') }} 達成</div>
+                        </div>
+                    @endforeach
+                </div>
+            @endif
+        </div>
+
         <div class="grid gap-6 md:grid-cols-2">
             <div class="rounded-xl border border-zinc-200 p-4 dark:border-zinc-700">
                 <flux:heading size="lg">休ませる筋肉</flux:heading>
