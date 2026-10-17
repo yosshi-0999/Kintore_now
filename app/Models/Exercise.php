@@ -24,4 +24,19 @@ class Exercise extends Model
     {
         return $this->belongsTo(Muscle::class);
     }
+
+    /**
+     * メニュー名と完全に一致する種目（前後の空白は無視する）。
+     * MySQL の照合順序では「ハ」「バ」「パ」なども同じ文字として比べるため、最後は PHP で厳密に比べる。
+     */
+    public static function findByExactName(?string $name): ?self
+    {
+        $name = trim((string) $name);
+
+        if ($name === '') {
+            return null;
+        }
+
+        return static::where('name', $name)->get()->first(fn (self $exercise) => $exercise->name === $name);
+    }
 }

@@ -34,6 +34,7 @@ Laravel の Livewire スターターキットを使うため、`users` は既存
 |---|---|---|
 | id | bigint PK | |
 | user_id | foreignId | cascadeOnDelete |
+| exercise_id | foreignId NULL | nullOnDelete。「種目から入力」で選んだ種目。自己ベストの集計に使う。種目を選ばなかった記録は NULL（#16） |
 | performed_at | dateTime | 実行日時 |
 | menu_name | string | 自由入力のメニュー名 |
 | weight | decimal(5,1) NULL | 重量(kg)。自重は NULL。0〜500、0.5 刻み |
@@ -87,6 +88,7 @@ erDiagram
     workouts ||--o{ muscle_workout : ""
     muscles ||--o{ muscle_workout : ""
     muscles ||--o{ exercises : "主に鍛える"
+    exercises |o--o{ workouts : "種目"
     users ||--o{ workout_plans : "設定する"
     workout_plans ||--o{ muscle_workout_plan : ""
     muscles ||--o{ muscle_workout_plan : ""
@@ -96,6 +98,7 @@ erDiagram
  
 - **休ませる筋肉**: 直近14日の `workouts` を取得し、`performed_at + rest_days` が現在より後の筋肉を「休ませる筋肉」とする（PHP で計算）
 - **おすすめ**: 休ませていない筋肉の `exercises` を表示する
+- **自己ベスト**: `exercise_id` のある `workouts` を種目ごとにまとめ、重量 → 回数 → セット数の順に比べて一番上の記録を表示する（PHP で計算。自重は重量ありより下。回数のない記録は対象外）。保存時に種目を選んでいなければ、メニュー名が種目名と完全に一致する種目に紐付ける（`Exercise::findByExactName`。照合順序でハ・バ・パが同じ扱いになるため PHP で比べる）。`exercise_id` 追加前の記録も、同じ基準でマイグレーションで紐付けた
 - **継続日数**: `performed_at` の日付を、今日（または昨日）から連続している日数だけ数える
 - **閲覧制御**: 本人、または `view_permissions` に行がある場合のみ記録を表示。それ以外はアカウント名だけ
 - **リマインド**: スケジューラで毎分 `reminders:send` を実行し、`is_enabled` が true、`sent_at` が NULL、`scheduled_at` が現在以前の `workout_plans` についてメール送信。送信後に `sent_at` を記録する。メールには入力フォームへのリンク（プランID指定）を含める

@@ -179,6 +179,79 @@ class WorkoutFormTest extends TestCase
         $this->assertSame(0, Workout::count());
     }
 
+    public function test_selected_exercise_is_saved_with_the_workout(): void
+    {
+        $exercise = Exercise::factory()->for($this->chest)->create(['name' => 'ベンチプレス']);
+
+        $this->fillForm()
+            ->set('exercise_id', (string) $exercise->id)
+            ->call('save')
+            ->assertHasNoErrors();
+
+        $this->assertTrue(Workout::sole()->exercise->is($exercise));
+    }
+
+    public function test_workout_without_exercise_is_saved_with_null_exercise(): void
+    {
+        $this->fillForm()->call('save')->assertHasNoErrors();
+
+        $this->assertNull(Workout::sole()->exercise_id);
+    }
+
+    public function test_typed_menu_name_matching_an_exercise_is_linked(): void
+    {
+        $exercise = Exercise::factory()->for($this->chest)->create(['name' => 'ベンチプレス']);
+
+        $this->fillForm()
+            ->set('menu_name', ' ベンチプレス ')
+            ->assertSet('exercise_id', (string) $exercise->id)
+            ->assertSee('自己ベストの対象：ベンチプレス')
+            ->call('save')
+            ->assertHasNoErrors();
+
+        $this->assertTrue(Workout::sole()->exercise->is($exercise));
+    }
+
+    public function test_typed_menu_name_not_matching_is_not_linked(): void
+    {
+        Exercise::factory()->for($this->chest)->create(['name' => 'ベンチプレス']);
+
+        $this->fillForm()
+            ->set('menu_name', 'ペンチプレス')
+            ->assertSet('exercise_id', '')
+            ->assertSee('種目に一致しないため、自己ベストの対象外です')
+            ->call('save');
+
+        $this->assertNull(Workout::sole()->exercise_id);
+    }
+
+    public function test_editing_menu_name_after_choosing_exercise_relinks_or_unlinks(): void
+    {
+        $bench = Exercise::factory()->for($this->chest)->create(['name' => 'ベンチプレス']);
+        $dumbbell = Exercise::factory()->for($this->chest)->create(['name' => 'ダンベルプレス']);
+
+        $this->fillForm()
+            ->set('exercise_id', (string) $bench->id)
+            ->assertSet('menu_name', 'ベンチプレス')
+            ->set('menu_name', 'ダンベルプレス')
+            ->assertSet('exercise_id', (string) $dumbbell->id)
+            ->set('menu_name', '自作メニュー')
+            ->assertSet('exercise_id', '')
+            ->call('save');
+
+        $this->assertNull(Workout::sole()->exercise_id);
+    }
+
+    public function test_unknown_exercise_is_rejected(): void
+    {
+        $this->fillForm()
+            ->set('exercise_id', '999999')
+            ->call('save')
+            ->assertHasErrors(['exercise_id' => 'exists']);
+
+        $this->assertSame(0, Workout::count());
+    }
+
     public function test_plan_link_prefills_the_form(): void
     {
         $plan = WorkoutPlan::factory()->for($this->user)->create(['menu_name' => '胸の日']);

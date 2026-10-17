@@ -17,6 +17,7 @@ class Workout extends Model
 
     protected $fillable = [
         'user_id',
+        'exercise_id',
         'performed_at',
         'menu_name',
         'weight',
@@ -39,6 +40,11 @@ class Workout extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function exercise(): BelongsTo
+    {
+        return $this->belongsTo(Exercise::class);
     }
 
     public function muscles(): BelongsToMany
