@@ -43,6 +43,9 @@ class WorkoutFormTest extends TestCase
         return Volt::test('workouts.form')
             ->set('performed_at', now()->format('Y-m-d\TH:i'))
             ->set('menu_name', 'ベンチプレス')
+            ->set('weight', '60')
+            ->set('reps', '10')
+            ->set('sets', '3')
             ->set('muscle_ids', [(string) $this->chest->id])
             ->set('rest_days', 2);
     }
@@ -121,6 +124,61 @@ class WorkoutFormTest extends TestCase
         $this->assertSame(0, Workout::count());
     }
 
+    public function test_weight_reps_and_sets_are_saved(): void
+    {
+        $this->fillForm()
+            ->set('weight', '62.5')
+            ->call('save')
+            ->assertHasNoErrors()
+            ->assertSet('weight', '')
+            ->assertSet('reps', '')
+            ->assertSet('sets', '');
+
+        $workout = Workout::sole();
+        $this->assertSame(62.5, $workout->weight);
+        $this->assertSame(10, $workout->reps);
+        $this->assertSame(3, $workout->sets);
+    }
+
+    public function test_weight_can_be_empty_for_bodyweight_exercise(): void
+    {
+        $this->fillForm()
+            ->set('weight', '')
+            ->call('save')
+            ->assertHasNoErrors();
+
+        $this->assertNull(Workout::sole()->weight);
+    }
+
+    public function test_reps_and_sets_are_required(): void
+    {
+        $this->fillForm()
+            ->set('reps', '')
+            ->set('sets', '')
+            ->call('save')
+            ->assertHasErrors(['reps' => 'required', 'sets' => 'required']);
+
+        $this->assertSame(0, Workout::count());
+    }
+
+    public function test_weight_reps_and_sets_must_be_in_range(): void
+    {
+        $this->fillForm()
+            ->set('weight', '62.3')
+            ->set('reps', '0')
+            ->set('sets', '21')
+            ->call('save')
+            ->assertHasErrors(['weight' => 'multiple_of', 'reps' => 'between', 'sets' => 'between']);
+
+        $this->fillForm()
+            ->set('weight', '500.5')
+            ->set('reps', '1.5')
+            ->call('save')
+            ->assertHasErrors(['weight' => 'between', 'reps' => 'integer']);
+
+        $this->assertSame(0, Workout::count());
+    }
+
     public function test_plan_link_prefills_the_form(): void
     {
         $plan = WorkoutPlan::factory()->for($this->user)->create(['menu_name' => '胸の日']);
@@ -168,6 +226,8 @@ class WorkoutFormTest extends TestCase
             ->assertSet('menu_name', 'ベンチプレス')
             ->assertSet('muscle_ids', [(string) $this->chest->id])
             ->assertSet('rest_days', 3)
+            ->set('reps', '10')
+            ->set('sets', '3')
             ->call('save')
             ->assertHasNoErrors();
 
@@ -190,6 +250,8 @@ class WorkoutFormTest extends TestCase
         $this->actingAs($this->user);
 
         Volt::test('workouts.form', ['muscleId' => $this->chest->id])
+            ->set('reps', '10')
+            ->set('sets', '3')
             ->call('save')
             ->assertSee('休息中の筋肉が含まれています');
 
