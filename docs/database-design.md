@@ -18,6 +18,7 @@ Laravel の Livewire スターターキットを使うため、`users` は既存
 |---|---|---|
 | id | bigint PK | |
 | name | string | 大胸筋、広背筋 など |
+| | UNIQUE(name) | Seeder の `firstOrCreate` で重複させないため |
  
 **exercises**（種目のマスタ。おすすめ提案とフォームの選択肢用。Seeder で投入）
  
@@ -27,6 +28,7 @@ Laravel の Livewire スターターキットを使うため、`users` は既存
 | name | string | ベンチプレス など |
 | muscle_id | foreignId | 主に鍛える筋肉 |
 | default_rest_days | unsignedTinyInteger | 推奨休憩日数 |
+| | UNIQUE(name) | Seeder の `updateOrCreate` で重複させないため |
  
 **workouts**（筋トレ記録）
  
@@ -42,6 +44,7 @@ Laravel の Livewire スターターキットを使うため、`users` は既存
 | sets | unsignedTinyInteger NULL | セット数。1〜20。フォームでは必須（追加前の記録は NULL） |
 | rest_days | unsignedTinyInteger | 休憩日数（選択式。0〜7） |
 | timestamps | | |
+| | INDEX(user_id, performed_at) | 休息判定・最近の記録で、ユーザーごとに日時で絞り込むため |
  
 **muscle_workout**（記録 ⇔ 使用した筋肉の中間テーブル）
  
@@ -49,6 +52,7 @@ Laravel の Livewire スターターキットを使うため、`users` は既存
 |---|---|---|
 | muscle_id | foreignId | |
 | workout_id | foreignId | cascadeOnDelete |
+| | PRIMARY(muscle_id, workout_id) | 同じ記録に同じ筋肉を重複させないため |
  
 **view_permissions**（閲覧許可。行がある＝許可済み）
  
@@ -71,6 +75,7 @@ Laravel の Livewire スターターキットを使うため、`users` は既存
 | is_enabled | boolean | default true。false なら送信しない |
 | sent_at | dateTime NULL | 送信日時。NULL なら未送信（二重送信防止） |
 | timestamps | | |
+| | INDEX(is_enabled, sent_at, scheduled_at) | `reminders:send` の送信対象を毎分探すため |
  
 **muscle_workout_plan**（通知プラン ⇔ 筋肉の中間テーブル）
  
@@ -78,6 +83,7 @@ Laravel の Livewire スターターキットを使うため、`users` は既存
 |---|---|---|
 | muscle_id | foreignId | |
 | workout_plan_id | foreignId | cascadeOnDelete |
+| | PRIMARY(muscle_id, workout_plan_id) | 同じプランに同じ筋肉を重複させないため |
  
 ## ER図
  
@@ -108,8 +114,7 @@ erDiagram
 必要になったときに足せば、今の設計を壊さずに済む。
  
 - 初心者向けテンプレート → `workout_templates` を追加（まずは `exercises` から選ぶだけでも代用できる）
-- ホームのブログ → `posts` を追加
-- セットごとに重量・回数を変えた記録 → `workout_sets` を追加（今は記録ごとに1つの値）
+
 - 閲覧の申請・承認 → `view_permissions` に `status` を追加
 ## タスク
  

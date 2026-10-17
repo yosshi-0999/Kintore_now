@@ -23,17 +23,15 @@
 - [ ] 自己ベスト欄と、メニュー名の候補・「自己ベストの対象」表示をブラウザで確認する（#16。pull 後に `sail artisan migrate` が必要）
 - [ ] 名前が種目と一致しない既存の記録を自己ベストに含めたい場合は、記録の編集機能を検討する
 
-## 決めること
 
-- [x] 重量・回数・セット数を記録するか → 記録ごとに1つ、`workouts` のカラムで記録する（#12）
-- [ ] 任意機能（F9 継続日数、F10 テンプレート、F11 ブログ）をいつ作るか
 
 ## 改善したいこと
 
-- [ ] アプリ全体の日本語化（`lang/ja` の追加、`APP_LOCALE=ja`）。ログイン画面やバリデーションの共通メッセージが英語のまま
-- [ ] `docs/database-design.md` に、追加したユニーク制約とインデックスを追記する
-- [ ] `docs/spec.md` の「次のステップ」を現状に合わせて更新する
-- [ ] Livewire のバージョンを `composer.json` で明示するか検討する（今は Volt 経由で v4）
+- [x] アプリ全体の日本語化（`lang/ja` の追加、`.env.example` を `APP_LOCALE=ja` に）
+- [ ] 各自の `.env` の `APP_LOCALE` を `ja` に変える（`sail artisan config:clear` も実行）
+- [x] `docs/database-design.md` に、追加したユニーク制約とインデックスを追記する
+- [x] `docs/spec.md` の「次のステップ」を現状に合わせて更新する
+- [x] Livewire のバージョンを `composer.json` で明示する（`"livewire/livewire": "^4.0"`。入っているバージョンは v4.4.7 のまま）
 
 ## 本番に向けて
 
