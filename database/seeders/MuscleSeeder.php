@@ -14,15 +14,28 @@ class MuscleSeeder extends Seeder
         '三角筋',
         '上腕二頭筋',
         '上腕三頭筋',
-        '腹筋',
+        '腹直筋',
         '大腿四頭筋',
         'ハムストリングス',
         '大臀筋',
         '下腿三頭筋',
+        '胸鎖乳突筋',
+        '前鋸筋',
+        '外腹斜筋',
+        '内転筋群',
+        '前脛骨筋',
+        '前腕伸筋群',
+        '前腕屈筋群',
+        '棘下筋',
+        '脊柱起立筋',
     ];
 
     public function run(): void
     {
+        if (! Muscle::where('name', '腹直筋')->exists()) {
+            Muscle::where('name', '腹筋')->update(['name' => '腹直筋']);
+        }
+
         foreach (self::NAMES as $name) {
             Muscle::firstOrCreate(['name' => $name]);
         }

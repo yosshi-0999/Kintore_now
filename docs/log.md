@@ -19,25 +19,7 @@
 
 ---
 
-## 2026-10-17 通知メールに、予定日時に休息中の筋肉を表示する（#9）
 
-### 変更内容
-- 通知プランを作ったあとに記録を追加すると、予定日時に休息中の筋肉があってもそのままメールが送られていた（#7）。案B に決め、送るときに判定してメール本文で知らせるようにした。送信は止めない
-- `SendReminders` で、送る前に `MuscleRestService::restingAmong()` に `scheduled_at` を渡して判定し、結果を通知に渡す。基準日時を送った時刻ではなく予定日時にしたのは、スケジューラが遅れても予定の時点で判定するため
-- `WorkoutPlanReminder` に引数 `$restingMuscles` を追加した（省略時は空）。休息中の筋肉があれば「※ 次の筋肉は休息中です：大胸筋（回復予定 2026/10/22 18:00）」の行を入れる
-
-### 変更ファイル
-- `app/Console/Commands/SendReminders.php`
-- `app/Notifications/WorkoutPlanReminder.php`
-- `tests/Feature/SendRemindersTest.php`
-
-### 確認したこと
-- `sail artisan test`：61 passed（追加した3件：休息中なら注意書きが入る／休息中でなければ入らない／判定は scheduled_at で行う）
-- `sail bin pint`：passed
-- 開発環境で `reminders:send` を実行し、注意書きのないメールが組み立てられることを確認した。注意書きが入るメールは画面からはまだ確認していない
-
-### 注意点
-- ログ出力のメールは日本語がエンコードされるため、`grep` で件名を検索しても見つからない
 
 ---
 

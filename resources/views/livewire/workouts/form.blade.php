@@ -32,7 +32,7 @@ new class extends Component {
     #[Locked]
     public array $acknowledgedMuscleIds = [];
 
-    public function mount(?int $planId = null): void
+    public function mount(?int $planId = null, ?int $muscleId = null): void
     {
         $this->performed_at = now()->format('Y-m-d\TH:i');
 
@@ -42,7 +42,27 @@ new class extends Component {
 
             $this->menu_name = $plan->menu_name;
             $this->muscle_ids = $plan->muscles->pluck('id')->map(fn ($id) => (string) $id)->all();
+        } elseif ($muscleId !== null) {
+            $this->fillFromMuscle(Muscle::findOrFail($muscleId));
         }
+    }
+
+    /**
+     * ダッシュボードの筋肉図から来たとき、その筋肉の最初の種目を初期値として入れる
+     */
+    private function fillFromMuscle(Muscle $muscle): void
+    {
+        $exercise = $muscle->exercises()->orderBy('id')->first();
+
+        if ($exercise === null) {
+            $this->menu_name = $muscle->name;
+            $this->muscle_ids = [(string) $muscle->id];
+
+            return;
+        }
+
+        $this->exercise_id = (string) $exercise->id;
+        $this->updatedExerciseId($this->exercise_id);
     }
 
     protected function rules(): array
