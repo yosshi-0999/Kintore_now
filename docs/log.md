@@ -19,28 +19,7 @@
 
 ---
 
-## 2026-10-17 ダッシュボードに筋肉図を追加し、筋肉名から記録フォームへ移動できるようにする
 
-### 変更内容
-- ダッシュボードをスターターキットの仮表示から**筋肉図**に置き換えた。筋肉名のラベルをクリックすると `route('workouts.create', ['muscle' => id])` に移動する（ラベルの位置は画像上の座標を%に変換して重ねている）
-- 記録フォームが `muscle` パラメータを受け取り、**その筋肉の最初の種目**（ID順）のメニュー・筋肉・休憩日数を初期値として入れる。種目がなければ筋肉名をメニューにする。存在しない筋肉IDは 404。送信ボタンを押すだけで記録できる
-- 休息中の確認は通常どおり働く（保存処理は変えていない）
-- 筋肉図に合わせて筋肉を20個に増やし、追加した筋肉の種目を Seeder に追加。「腹筋」は「腹直筋」に改名（既存の記録との紐付けを残すため、Seeder 内で行を作り直さず改名する）
-
-### 変更ファイル
-- 新規：`public/images/muscle-map.jpg`
-- 変更：`resources/views/dashboard.blade.php`、`routes/web.php`、`resources/views/livewire/workouts/create.blade.php`、`resources/views/livewire/workouts/form.blade.php`
-- 変更：`database/seeders/MuscleSeeder.php`、`database/seeders/ExerciseSeeder.php`
-- 変更：`tests/Feature/WorkoutFormTest.php`、`tests/Feature/DashboardTest.php`
-
-### 確認したこと
-- `sail artisan test`：63 passed
-- `sail artisan db:seed`：筋肉20件・種目25件。全筋肉に種目あり、「腹筋」は残っていない
-- ラベル位置は画像に枠を描いて確認。ブラウザでの表示確認は未実施
-
-### 注意点
-- 筋肉図の画像はユーザー提供のもの。ライセンス（アプリへの掲載可否）は提供者が確認済みとして扱っている
-- 追加した種目と休憩日数は仮の値
 
 ---
 

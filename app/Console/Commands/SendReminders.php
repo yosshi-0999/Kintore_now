@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Models\WorkoutPlan;
 use App\Notifications\WorkoutPlanReminder;
+use App\Services\MuscleRestService;
 use Illuminate\Console\Command;
 use Throwable;
 
@@ -13,7 +14,7 @@ class SendReminders extends Command
 
     protected $description = '予定日時になった通知プランのメールを送信する';
 
-    public function handle(): int
+    public function handle(MuscleRestService $restService): int
     {
         $plans = WorkoutPlan::query()->due()->with(['user', 'muscles'])->get();
         $sent = 0;
@@ -29,8 +30,11 @@ class SendReminders extends Command
                 continue;
             }
 
+            // プラン作成後の記録で、予定日時に休息中になった筋肉があれば本文で知らせる
+            $restingMuscles = $restService->restingAmong($plan->user, $plan->muscles->modelKeys(), $plan->scheduled_at);
+
             try {
-                $plan->user->notify(new WorkoutPlanReminder($plan));
+                $plan->user->notify(new WorkoutPlanReminder($plan, $restingMuscles));
                 $sent++;
             } catch (Throwable $e) {
                 // 送れなかったら次回また送れるよう元に戻す
