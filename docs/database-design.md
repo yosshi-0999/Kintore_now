@@ -6,7 +6,8 @@ Laravel の Livewire スターターキットを使うため、`users` は既存
 ## 方針
  
 - 新規テーブルは **6つ**（記録まわり4つ＋通知プラン2つ）。`users` にはカラムを追加しない
-- テンプレート・ブログ・セット数の記録は後回し（下の「後で追加するもの」参照）
+- テンプレート・ブログは後回し（下の「後で追加するもの」参照）
+- 重量・回数・セット数は `workouts` のカラムとして記録する（記録ごとに1つ。#12）
 ## テーブル
  
 ### 新規テーブル
@@ -35,6 +36,9 @@ Laravel の Livewire スターターキットを使うため、`users` は既存
 | user_id | foreignId | cascadeOnDelete |
 | performed_at | dateTime | 実行日時 |
 | menu_name | string | 自由入力のメニュー名 |
+| weight | decimal(5,1) NULL | 重量(kg)。自重は NULL。0〜500、0.5 刻み |
+| reps | unsignedSmallInteger NULL | 回数。1〜100。フォームでは必須（追加前の記録は NULL） |
+| sets | unsignedTinyInteger NULL | セット数。1〜20。フォームでは必須（追加前の記録は NULL） |
 | rest_days | unsignedTinyInteger | 休憩日数（選択式。0〜7） |
 | timestamps | | |
  
@@ -102,7 +106,7 @@ erDiagram
  
 - 初心者向けテンプレート → `workout_templates` を追加（まずは `exercises` から選ぶだけでも代用できる）
 - ホームのブログ → `posts` を追加
-- 重量・回数・セット数 → `workout_sets` を追加
+- セットごとに重量・回数を変えた記録 → `workout_sets` を追加（今は記録ごとに1つの値）
 - 閲覧の申請・承認 → `view_permissions` に `status` を追加
 ## タスク
  
@@ -113,5 +117,5 @@ erDiagram
 - [ ] リマインド用コマンドとスケジューラの作成
 - [x] タイムゾーンを `Asia/Tokyo` に統一する
 ## 今後決めるべきこと
-- [ ] 重量・回数・セット数を記録するか
+- [x] 重量・回数・セット数を記録するか → 記録する（`workouts` に weight / reps / sets。#12）
  

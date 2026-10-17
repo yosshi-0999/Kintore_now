@@ -17,6 +17,9 @@ class Workout extends Model
         'user_id',
         'performed_at',
         'menu_name',
+        'weight',
+        'reps',
+        'sets',
         'rest_days',
     ];
 
@@ -24,6 +27,9 @@ class Workout extends Model
     {
         return [
             'performed_at' => 'datetime',
+            'weight' => 'float',
+            'reps' => 'integer',
+            'sets' => 'integer',
             'rest_days' => 'integer',
         ];
     }

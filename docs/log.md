@@ -19,7 +19,32 @@
 
 ---
 
+## 2026-10-17 筋トレ記録に重量・回数・セット数を追加（#12）
 
+### 変更内容
+- 未決事項「重量・回数・セット数を記録するか」を「記録する」に決めた。記録ごとに1つの値（例：60kg × 10回 × 3セット）。セットごとに変える記録は必要になったら `workout_sets` で拡張する
+- `workouts` に `weight`（decimal(5,1)）・`reps`・`sets` を追加するマイグレーションを新規作成。追加前の記録には値がないため NULL 可にし、回数・セット数の必須はフォームのバリデーションで担保する
+- 入力フォームに数字入力欄を追加。重量は任意（自重のため）、回数・セット数は必須。範囲（重量 0〜500・0.5 刻み、回数 1〜100、セット数 1〜20）はサーバー側で検証する
+- `RecordWorkout` で保存。重量が空文字なら NULL にする（Livewire から空文字が来ても MySQL でエラーにしないため）
+- ユーザーページの記録一覧に「60kg × 10回 × 3セット」を表示（本人と閲覧許可のあるユーザー）。値のない以前の記録には表示しない
+- AGENTS.md のフォームのルール（数字入力の例外）と未決事項、`docs/database-design.md` を更新
+
+### 変更ファイル
+- `database/migrations/2026_10_17_000001_add_volume_columns_to_workouts_table.php`（新規）
+- `app/Models/Workout.php`、`database/factories/WorkoutFactory.php`、`app/Actions/RecordWorkout.php`
+- `resources/views/livewire/workouts/form.blade.php`、`resources/views/livewire/users/show.blade.php`
+- `tests/Feature/WorkoutFormTest.php`、`tests/Feature/UserPageTest.php`
+- `AGENTS.md`、`docs/database-design.md`
+
+### 確認したこと
+- `sail artisan migrate`：開発 DB に追加できた
+- `sail artisan test`：71 passed（追加：保存／重量なし／必須／範囲・刻み・整数／閲覧許可による表示／以前の記録の表示）
+- `sail bin pint`：passed
+- ブラウザでの表示確認：未実行
+
+### 注意点
+- pull 後に `sail artisan migrate` を実行しないと、記録の保存でエラーになる
+- 回数・セット数を必須にしたため、既存テストの入力にも値を追加した
 
 ---
 

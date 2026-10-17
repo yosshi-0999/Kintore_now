@@ -101,6 +101,11 @@ new class extends Component {
                             <span class="font-semibold">{{ $workout->menu_name }}</span>
                             <span class="text-zinc-500">{{ $workout->performed_at->format('Y/m/d H:i') }}</span>
                         </div>
+                        @if ($workout->reps !== null)
+                            <div>
+                                {{ $workout->weight !== null ? $workout->weight.'kg × ' : '' }}{{ $workout->reps }}回 × {{ $workout->sets }}セット
+                            </div>
+                        @endif
                         <div class="text-zinc-500">
                             {{ $workout->muscles->pluck('name')->join('、') }} ／ 休憩 {{ $workout->rest_days }} 日
                         </div>

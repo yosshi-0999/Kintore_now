@@ -17,6 +17,9 @@ class WorkoutFactory extends Factory
             'user_id' => User::factory(),
             'performed_at' => now()->subDays(10),
             'menu_name' => fake()->word(),
+            'weight' => 60,
+            'reps' => 10,
+            'sets' => 3,
             'rest_days' => 2,
         ];
     }

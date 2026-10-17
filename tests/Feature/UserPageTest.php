@@ -42,6 +42,7 @@ class UserPageTest extends TestCase
             ->assertOk()
             ->assertSee('Owner')
             ->assertDontSee('ひみつのメニュー')
+            ->assertDontSee('60kg × 10回 × 3セット')
             ->assertSee('許可されたユーザーのみ閲覧できます');
     }
 
@@ -55,7 +56,25 @@ class UserPageTest extends TestCase
             ->get(route('users.show', $owner))
             ->assertOk()
             ->assertSee('ひみつのメニュー')
+            ->assertSee('60kg × 10回 × 3セット')
             ->assertDontSee('筋トレ内容を記録');
+    }
+
+    public function test_workout_recorded_before_volume_columns_is_shown_without_volume(): void
+    {
+        $user = User::factory()->create();
+        Workout::factory()->for($user)->create([
+            'menu_name' => '以前の記録',
+            'weight' => null,
+            'reps' => null,
+            'sets' => null,
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('users.show', $user))
+            ->assertOk()
+            ->assertSee('以前の記録')
+            ->assertDontSee('回 ×');
     }
 
     public function test_permission_can_be_granted_and_revoked(): void

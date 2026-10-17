@@ -12,6 +12,9 @@ use Livewire\Volt\Component;
 new class extends Component {
     public string $performed_at = '';
     public string $menu_name = '';
+    public string $weight = '';
+    public string $reps = '';
+    public string $sets = '';
     public array $muscle_ids = [];
     public int $rest_days = 2;
     public string $exercise_id = '';
@@ -70,6 +73,9 @@ new class extends Component {
         return [
             'performed_at' => ['required', 'date'],
             'menu_name' => ['required', 'string', 'max:100'],
+            'weight' => ['nullable', 'numeric', 'between:0,500', 'multiple_of:0.5'],
+            'reps' => ['required', 'integer', 'between:1,100'],
+            'sets' => ['required', 'integer', 'between:1,20'],
             'muscle_ids' => ['required', 'array', 'min:1'],
             'muscle_ids.*' => ['integer', 'exists:muscles,id'],
             'rest_days' => ['required', 'integer', 'between:0,'.MuscleRestService::MAX_REST_DAYS],
@@ -84,6 +90,12 @@ new class extends Component {
             'max' => ':attributeは:max文字以内で入力してください。',
             'date' => ':attributeの形式が正しくありません。',
             'between' => ':attributeは:min〜:maxの範囲で選んでください。',
+            'numeric' => ':attributeは数字で入力してください。',
+            'integer' => ':attributeは整数で入力してください。',
+            'weight.between' => ':attributeは:min〜:maxの範囲で入力してください。',
+            'weight.multiple_of' => ':attributeは:value kg 刻みで入力してください。',
+            'reps.between' => ':attributeは:min〜:maxの範囲で入力してください。',
+            'sets.between' => ':attributeは:min〜:maxの範囲で入力してください。',
         ];
     }
 
@@ -92,6 +104,9 @@ new class extends Component {
         return [
             'performed_at' => '実行日時',
             'menu_name' => 'メニュー',
+            'weight' => '重量',
+            'reps' => '回数',
+            'sets' => 'セット数',
             'muscle_ids' => '使用した筋肉',
             'rest_days' => '休憩日数',
         ];
@@ -133,7 +148,7 @@ new class extends Component {
 
         app(RecordWorkout::class)(Auth::user(), $validated);
 
-        $this->reset('menu_name', 'muscle_ids', 'exercise_id', 'restWarnings', 'acknowledgedMuscleIds');
+        $this->reset('menu_name', 'weight', 'reps', 'sets', 'muscle_ids', 'exercise_id', 'restWarnings', 'acknowledgedMuscleIds');
         $this->rest_days = 2;
         $this->performed_at = now()->format('Y-m-d\TH:i');
 
@@ -192,7 +207,13 @@ new class extends Component {
 
         <flux:input wire:model="performed_at" type="datetime-local" label="実行日時" required />
 
-        <flux:input wire:model="menu_name" label="メニュー" placeholder="例：ベンチプレス 3セット" required />
+        <flux:input wire:model="menu_name" label="メニュー" placeholder="例：ベンチプレス" required />
+
+        <div class="grid grid-cols-3 gap-4">
+            <flux:input wire:model="weight" type="number" step="0.5" min="0" max="500" label="重量（kg）" placeholder="自重は空欄" />
+            <flux:input wire:model="reps" type="number" step="1" min="1" max="100" label="回数" required />
+            <flux:input wire:model="sets" type="number" step="1" min="1" max="20" label="セット数" required />
+        </div>
 
         <flux:checkbox.group wire:model="muscle_ids" label="使用した筋肉">
             <div class="grid grid-cols-2 gap-2 sm:grid-cols-3">
