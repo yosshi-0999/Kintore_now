@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Exercise;
 use App\Models\Muscle;
 use App\Models\User;
 use App\Models\Workout;
@@ -42,6 +43,7 @@ class UserPageTest extends TestCase
             ->assertOk()
             ->assertSee('Owner')
             ->assertDontSee('ひみつのメニュー')
+            ->assertDontSee('60kg × 10回 × 3セット')
             ->assertSee('許可されたユーザーのみ閲覧できます');
     }
 
@@ -55,7 +57,61 @@ class UserPageTest extends TestCase
             ->get(route('users.show', $owner))
             ->assertOk()
             ->assertSee('ひみつのメニュー')
+            ->assertSee('60kg × 10回 × 3セット')
             ->assertDontSee('筋トレ内容を記録');
+    }
+
+    public function test_workout_recorded_before_volume_columns_is_shown_without_volume(): void
+    {
+        $user = User::factory()->create();
+        Workout::factory()->for($user)->create([
+            'menu_name' => '以前の記録',
+            'weight' => null,
+            'reps' => null,
+            'sets' => null,
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('users.show', $user))
+            ->assertOk()
+            ->assertSee('以前の記録')
+            ->assertDontSee('回 ×');
+    }
+
+    public function test_personal_bests_are_shown_to_owner_and_permitted_user_only(): void
+    {
+        $owner = User::factory()->create();
+        $bench = Exercise::factory()->create(['name' => 'ベンチプレス']);
+        Workout::factory()->for($owner)->create([
+            'exercise_id' => $bench->id,
+            'weight' => 82.5,
+            'reps' => 5,
+            'sets' => 3,
+            'performed_at' => '2026-10-16 10:00:00',
+        ]);
+        $viewer = User::factory()->create();
+        $owner->viewers()->attach($viewer);
+
+        foreach ([$owner, $viewer] as $user) {
+            $this->actingAs($user)
+                ->get(route('users.show', $owner))
+                ->assertOk()
+                ->assertSeeInOrder(['自己ベスト', 'ベンチプレス', '82.5kg', '× 5回 × 3セット', '2026/10/16 達成', '休ませる筋肉']);
+        }
+
+        $this->actingAs(User::factory()->create())
+            ->get(route('users.show', $owner))
+            ->assertDontSee('自己ベスト')
+            ->assertDontSee('82.5kg');
+    }
+
+    public function test_owner_without_personal_best_sees_how_to_add_one(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)
+            ->get(route('users.show', $user))
+            ->assertSee('ここに種目ごとの自己ベストが表示されます');
     }
 
     public function test_permission_can_be_granted_and_revoked(): void

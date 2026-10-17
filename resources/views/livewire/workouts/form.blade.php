@@ -12,6 +12,9 @@ use Livewire\Volt\Component;
 new class extends Component {
     public string $performed_at = '';
     public string $menu_name = '';
+    public string $weight = '';
+    public string $reps = '';
+    public string $sets = '';
     public array $muscle_ids = [];
     public int $rest_days = 2;
     public string $exercise_id = '';
@@ -42,6 +45,7 @@ new class extends Component {
 
             $this->menu_name = $plan->menu_name;
             $this->muscle_ids = $plan->muscles->pluck('id')->map(fn ($id) => (string) $id)->all();
+            $this->syncExerciseWithMenu();
         } elseif ($muscleId !== null) {
             $this->fillFromMuscle(Muscle::findOrFail($muscleId));
         }
@@ -57,6 +61,7 @@ new class extends Component {
         if ($exercise === null) {
             $this->menu_name = $muscle->name;
             $this->muscle_ids = [(string) $muscle->id];
+            $this->syncExerciseWithMenu();
 
             return;
         }
@@ -68,8 +73,12 @@ new class extends Component {
     protected function rules(): array
     {
         return [
+            'exercise_id' => ['nullable', 'integer', 'exists:exercises,id'],
             'performed_at' => ['required', 'date'],
             'menu_name' => ['required', 'string', 'max:100'],
+            'weight' => ['nullable', 'numeric', 'between:0,500', 'multiple_of:0.5'],
+            'reps' => ['required', 'integer', 'between:1,100'],
+            'sets' => ['required', 'integer', 'between:1,20'],
             'muscle_ids' => ['required', 'array', 'min:1'],
             'muscle_ids.*' => ['integer', 'exists:muscles,id'],
             'rest_days' => ['required', 'integer', 'between:0,'.MuscleRestService::MAX_REST_DAYS],
@@ -81,17 +90,29 @@ new class extends Component {
         return [
             'required' => ':attributeを入力してください。',
             'muscle_ids.required' => '使用した筋肉を1つ以上選んでください。',
+            'exercise_id.integer' => '種目の選択が正しくありません。',
+            'exercise_id.exists' => '種目の選択が正しくありません。',
             'max' => ':attributeは:max文字以内で入力してください。',
             'date' => ':attributeの形式が正しくありません。',
             'between' => ':attributeは:min〜:maxの範囲で選んでください。',
+            'numeric' => ':attributeは数字で入力してください。',
+            'integer' => ':attributeは整数で入力してください。',
+            'weight.between' => ':attributeは:min〜:maxの範囲で入力してください。',
+            'weight.multiple_of' => ':attributeは:value kg 刻みで入力してください。',
+            'reps.between' => ':attributeは:min〜:maxの範囲で入力してください。',
+            'sets.between' => ':attributeは:min〜:maxの範囲で入力してください。',
         ];
     }
 
     protected function validationAttributes(): array
     {
         return [
+            'exercise_id' => '種目',
             'performed_at' => '実行日時',
             'menu_name' => 'メニュー',
+            'weight' => '重量',
+            'reps' => '回数',
+            'sets' => 'セット数',
             'muscle_ids' => '使用した筋肉',
             'rest_days' => '休憩日数',
         ];
@@ -111,6 +132,19 @@ new class extends Component {
         $this->menu_name = $exercise->name;
         $this->muscle_ids = [(string) $exercise->muscle_id];
         $this->rest_days = $exercise->default_rest_days;
+    }
+
+    /**
+     * メニュー名を書き換えたら、一致する種目に付け替える（一致しなければ外す）
+     */
+    public function updatedMenuName(): void
+    {
+        $this->syncExerciseWithMenu();
+    }
+
+    private function syncExerciseWithMenu(): void
+    {
+        $this->exercise_id = (string) (Exercise::findByExactName($this->menu_name)?->id ?? '');
     }
 
     public function save(): void
@@ -133,7 +167,7 @@ new class extends Component {
 
         app(RecordWorkout::class)(Auth::user(), $validated);
 
-        $this->reset('menu_name', 'muscle_ids', 'exercise_id', 'restWarnings', 'acknowledgedMuscleIds');
+        $this->reset('menu_name', 'weight', 'reps', 'sets', 'muscle_ids', 'exercise_id', 'restWarnings', 'acknowledgedMuscleIds');
         $this->rest_days = 2;
         $this->performed_at = now()->format('Y-m-d\TH:i');
 
@@ -167,9 +201,12 @@ new class extends Component {
 
     public function with(): array
     {
+        $exercises = Exercise::with('muscle')->orderBy('muscle_id')->orderBy('id')->get();
+
         return [
             'muscles' => Muscle::orderBy('id')->get(),
-            'exercises' => Exercise::with('muscle')->orderBy('muscle_id')->orderBy('id')->get(),
+            'exercises' => $exercises,
+            'linkedExercise' => $exercises->firstWhere('id', (int) $this->exercise_id),
             'maxRestDays' => MuscleRestService::MAX_REST_DAYS,
         ];
     }
@@ -192,7 +229,30 @@ new class extends Component {
 
         <flux:input wire:model="performed_at" type="datetime-local" label="実行日時" required />
 
-        <flux:input wire:model="menu_name" label="メニュー" placeholder="例：ベンチプレス 3セット" required />
+        <div>
+            <flux:input wire:model.live.debounce.400ms="menu_name" list="exercise-names" label="メニュー" placeholder="例：ベンチプレス" required />
+            <datalist id="exercise-names">
+                @foreach ($exercises as $exercise)
+                    <option value="{{ $exercise->name }}"></option>
+                @endforeach
+            </datalist>
+
+            @if (filled($menu_name))
+                <flux:text class="mt-1 text-xs">
+                    @if ($linkedExercise)
+                        🏆 自己ベストの対象：{{ $linkedExercise->name }}
+                    @else
+                        種目に一致しないため、自己ベストの対象外です
+                    @endif
+                </flux:text>
+            @endif
+        </div>
+
+        <div class="grid grid-cols-3 gap-4">
+            <flux:input wire:model="weight" type="number" step="0.5" min="0" max="500" label="重量（kg）" placeholder="自重は空欄" />
+            <flux:input wire:model="reps" type="number" step="1" min="1" max="100" label="回数" required />
+            <flux:input wire:model="sets" type="number" step="1" min="1" max="20" label="セット数" required />
+        </div>
 
         <flux:checkbox.group wire:model="muscle_ids" label="使用した筋肉">
             <div class="grid grid-cols-2 gap-2 sm:grid-cols-3">

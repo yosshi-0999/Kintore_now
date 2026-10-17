@@ -19,58 +19,7 @@
 
 ---
 
-## 2026-10-17 ブログ（F11）の記事一覧・記事ページを追加
 
-### 変更内容
-- ブログ記事は DB ではなく `resources/posts/*.md`（1記事1ファイル）で管理することにした。テーブル追加も新しいパッケージも不要（Laravel 標準の `Str::markdown` を使う）
-- `BlogPostService` で記事を読み込む。先頭のヘッダー（`title` / `date` / `description`）を読み、公開日の新しい順に並べる。記事内の HTML タグは除去し、危険なリンクも無効にする。スラッグはファイル名で、パスを組み立てずに一覧から探すので、他のファイルは読めない
-- 記事一覧（`/blog`）と記事ページ（`/blog/{slug}`）を追加。ログインした人のみ。存在しない記事は 404
-- サイドバーの「筋トレ」グループに「ブログ」へのリンクを追加
-- サンプル記事を3本追加（休息と超回復、分割法、初心者の始め方）
-- 正規表現に `u` フラグがないと、`\R` が「者」などの文字に含まれる 0x85 のバイトを改行とみなし、タイトルが途中で切れる不具合があった。`u` を付けて直し、テストを追加
-
-### 変更ファイル
-- 新規：`app/Services/BlogPost.php`、`app/Services/BlogPostService.php`、`resources/posts/{rest-and-recovery,split-training,getting-started}.md`、`resources/views/livewire/blog/{index,show}.blade.php`、`tests/Feature/BlogTest.php`
-- 変更：`routes/web.php`、`resources/views/components/layouts/app/sidebar.blade.php`
-- 変更：`docs/spec.md`（F11 の詳細とページ構成）、`docs/database-design.md`（「後で追加するもの」の `posts` を取り消し）
-
-### 確認したこと
-- `sail artisan test`：78 passed（ブログのテスト8件を追加）
-- `sail bin pint --dirty`：問題なし
-- tinker で同梱の3記事のタイトル・説明が正しく読めること、表が `<table>` に変換されることを確認
-- ブラウザでの表示確認は未実施
-
-### 注意点
-- サンプル記事は AI の下書き。内容（休息日数の目安など）はチームで確認すること
-- 記事の公開日はヘッダーの `date` で決まる。予約公開の仕組みはない
-
----
-
-## 2026-10-17 アプリ全体の日本語化とドキュメントの更新
-
-### 変更内容
-- `lang/ja`（`auth` / `pagination` / `passwords` / `validation`）と `lang/ja.json` を追加。ログイン失敗やバリデーションの共通メッセージ、Laravel 本体のメール（パスワード再設定・メール確認）の文言を日本語にした
-- スターターキットの画面（認証・設定・サイドバー・ヘッダー）で英語が直接書かれていた文言を `__()` で囲み、`lang/ja.json` で訳した。スターターキットの書き方に合わせ、英語の原文は残している
-- `.env.example` と `phpunit.xml` を `APP_LOCALE=ja` にした（テストを手元の `.env` に左右されないようにするため）
-- `docs/database-design.md` に、マイグレーションで追加したユニーク制約・インデックス・中間テーブルの複合主キーを、理由とともに追記
-- `docs/spec.md` の「次のステップ」を現状（F1〜F8 は実装済み）に合わせて更新
-- `docs/spec.md` の「ページ構成」を、実際のルートに合わせて更新（ダッシュボード、ユーザー一覧、通知プラン一覧、閲覧許可、設定を追加し、URL を併記）
-
-### 変更ファイル
-- 新規：`lang/ja/{auth,pagination,passwords,validation}.php`、`lang/ja.json`、`tests/Feature/LocalizationTest.php`
-- 変更：`.env.example`、`phpunit.xml`、`composer.json`、`composer.lock`
-- 変更：`resources/views/livewire/auth/{login,register,forgot-password,reset-password,confirm-password}.blade.php`、`resources/views/livewire/settings/{profile,password,appearance}.blade.php`、`resources/views/components/settings/layout.blade.php`、`resources/views/components/layouts/app/{sidebar,header}.blade.php`、`resources/views/partials/settings-heading.blade.php`
-- 変更：`docs/database-design.md`、`docs/spec.md`
-
-### 確認したこと
-- `sail artisan test`：70 passed（日本語表示のテスト4件を追加）
-- `sail bin pint --dirty`：問題なし
-- ブラウザでの表示確認は未実施
-
-### 注意点
-- 手元の `.env` の `APP_LOCALE` は各自で `ja` に変える必要がある（`.env` は AI が編集しないルールのため）。変えたら `sail artisan config:clear`
-- `welcome.blade.php`（トップページ）とアプリ名「Laravel Starter Kit」は日本語化の対象外にした
-- Livewire のバージョンを `composer.json` で明示した（`"livewire/livewire": "^4.0"`。`composer update --lock` で実行し、`composer.lock` はハッシュのみ変更。入っているバージョンは v4.4.7 のまま）
 
 ---
 

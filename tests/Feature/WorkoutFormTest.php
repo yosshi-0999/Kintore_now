@@ -43,6 +43,9 @@ class WorkoutFormTest extends TestCase
         return Volt::test('workouts.form')
             ->set('performed_at', now()->format('Y-m-d\TH:i'))
             ->set('menu_name', 'ベンチプレス')
+            ->set('weight', '60')
+            ->set('reps', '10')
+            ->set('sets', '3')
             ->set('muscle_ids', [(string) $this->chest->id])
             ->set('rest_days', 2);
     }
@@ -121,6 +124,134 @@ class WorkoutFormTest extends TestCase
         $this->assertSame(0, Workout::count());
     }
 
+    public function test_weight_reps_and_sets_are_saved(): void
+    {
+        $this->fillForm()
+            ->set('weight', '62.5')
+            ->call('save')
+            ->assertHasNoErrors()
+            ->assertSet('weight', '')
+            ->assertSet('reps', '')
+            ->assertSet('sets', '');
+
+        $workout = Workout::sole();
+        $this->assertSame(62.5, $workout->weight);
+        $this->assertSame(10, $workout->reps);
+        $this->assertSame(3, $workout->sets);
+    }
+
+    public function test_weight_can_be_empty_for_bodyweight_exercise(): void
+    {
+        $this->fillForm()
+            ->set('weight', '')
+            ->call('save')
+            ->assertHasNoErrors();
+
+        $this->assertNull(Workout::sole()->weight);
+    }
+
+    public function test_reps_and_sets_are_required(): void
+    {
+        $this->fillForm()
+            ->set('reps', '')
+            ->set('sets', '')
+            ->call('save')
+            ->assertHasErrors(['reps' => 'required', 'sets' => 'required']);
+
+        $this->assertSame(0, Workout::count());
+    }
+
+    public function test_weight_reps_and_sets_must_be_in_range(): void
+    {
+        $this->fillForm()
+            ->set('weight', '62.3')
+            ->set('reps', '0')
+            ->set('sets', '21')
+            ->call('save')
+            ->assertHasErrors(['weight' => 'multiple_of', 'reps' => 'between', 'sets' => 'between']);
+
+        $this->fillForm()
+            ->set('weight', '500.5')
+            ->set('reps', '1.5')
+            ->call('save')
+            ->assertHasErrors(['weight' => 'between', 'reps' => 'integer']);
+
+        $this->assertSame(0, Workout::count());
+    }
+
+    public function test_selected_exercise_is_saved_with_the_workout(): void
+    {
+        $exercise = Exercise::factory()->for($this->chest)->create(['name' => 'ベンチプレス']);
+
+        $this->fillForm()
+            ->set('exercise_id', (string) $exercise->id)
+            ->call('save')
+            ->assertHasNoErrors();
+
+        $this->assertTrue(Workout::sole()->exercise->is($exercise));
+    }
+
+    public function test_workout_without_exercise_is_saved_with_null_exercise(): void
+    {
+        $this->fillForm()->call('save')->assertHasNoErrors();
+
+        $this->assertNull(Workout::sole()->exercise_id);
+    }
+
+    public function test_typed_menu_name_matching_an_exercise_is_linked(): void
+    {
+        $exercise = Exercise::factory()->for($this->chest)->create(['name' => 'ベンチプレス']);
+
+        $this->fillForm()
+            ->set('menu_name', ' ベンチプレス ')
+            ->assertSet('exercise_id', (string) $exercise->id)
+            ->assertSee('自己ベストの対象：ベンチプレス')
+            ->call('save')
+            ->assertHasNoErrors();
+
+        $this->assertTrue(Workout::sole()->exercise->is($exercise));
+    }
+
+    public function test_typed_menu_name_not_matching_is_not_linked(): void
+    {
+        Exercise::factory()->for($this->chest)->create(['name' => 'ベンチプレス']);
+
+        $this->fillForm()
+            ->set('menu_name', 'ペンチプレス')
+            ->assertSet('exercise_id', '')
+            ->assertSee('種目に一致しないため、自己ベストの対象外です')
+            ->call('save');
+
+        $this->assertNull(Workout::sole()->exercise_id);
+    }
+
+    public function test_editing_menu_name_after_choosing_exercise_relinks_or_unlinks(): void
+    {
+        $bench = Exercise::factory()->for($this->chest)->create(['name' => 'ベンチプレス']);
+        $dumbbell = Exercise::factory()->for($this->chest)->create(['name' => 'ダンベルプレス']);
+
+        $this->fillForm()
+            ->set('exercise_id', (string) $bench->id)
+            ->assertSet('menu_name', 'ベンチプレス')
+            ->set('menu_name', 'ダンベルプレス')
+            ->assertSet('exercise_id', (string) $dumbbell->id)
+            ->set('menu_name', '自作メニュー')
+            ->assertSet('exercise_id', '')
+            ->call('save');
+
+        $this->assertNull(Workout::sole()->exercise_id);
+    }
+
+    public function test_unknown_exercise_is_rejected(): void
+    {
+        $this->fillForm()
+            ->set('exercise_id', '999999')
+            ->call('save')
+            ->assertHasErrors(['exercise_id' => 'exists']);
+
+        $this->assertSame(0, Workout::count());
+    }
+
     public function test_plan_link_prefills_the_form(): void
     {
         $plan = WorkoutPlan::factory()->for($this->user)->create(['menu_name' => '胸の日']);
@@ -168,6 +299,8 @@ class WorkoutFormTest extends TestCase
             ->assertSet('menu_name', 'ベンチプレス')
             ->assertSet('muscle_ids', [(string) $this->chest->id])
             ->assertSet('rest_days', 3)
+            ->set('reps', '10')
+            ->set('sets', '3')
             ->call('save')
             ->assertHasNoErrors();
 
@@ -190,6 +323,8 @@ class WorkoutFormTest extends TestCase
         $this->actingAs($this->user);
 
         Volt::test('workouts.form', ['muscleId' => $this->chest->id])
+            ->set('reps', '10')
+            ->set('sets', '3')
             ->call('save')
             ->assertSee('休息中の筋肉が含まれています');
 
