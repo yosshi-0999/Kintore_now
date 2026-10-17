@@ -1,4 +1,5 @@
 - git clone https://github.com/yosshi-0999/Kintore_now.git でリポジトリをクローン
+- 開いたのちにブランチを任意のものに切り替える
 - composer require laravel/sail --devと
     php artisan sail:install　を実行
 - docker run --rm \

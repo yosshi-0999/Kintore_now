@@ -8,6 +8,9 @@ new class extends Component {
     #[Url]
     public ?int $plan = null;
 
+    #[Url]
+    public ?int $muscle = null;
+
     public function mount(): void
     {
         // 他人のプランIDが指定されたら拒否する
@@ -22,10 +25,12 @@ new class extends Component {
         <flux:heading size="xl" level="1">筋トレ内容を記録</flux:heading>
         @if ($plan)
             <flux:text class="mt-1">通知プランの内容を入力済みです。必要に応じて変更してください。</flux:text>
+        @elseif ($muscle)
+            <flux:text class="mt-1">選んだ筋肉の種目を入力済みです。必要に応じて変更してください。</flux:text>
         @endif
     </div>
 
-    <livewire:workouts.form :plan-id="$plan" />
+    <livewire:workouts.form :plan-id="$plan" :muscle-id="$muscle" />
 
     <flux:link :href="route('mypage')" wire:navigate>マイページへ戻る</flux:link>
 </section>
