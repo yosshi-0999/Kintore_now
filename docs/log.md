@@ -19,6 +19,25 @@
 
 ---
 
+## 2026-10-24 ユーザー一覧を閲覧許可のあるユーザーだけにする（#20）
+
+### 変更内容
+- ユーザー一覧に全ユーザーを出していたのを、自分に閲覧を許可しているユーザー（`view_permissions` の `viewer_id` が自分の行の `owner`）だけにした。記録を見られる範囲（`UserPolicy::viewRecords`）と同じになる
+- 該当者がいないときの文言を追加
+
+### 変更ファイル
+- `resources/views/livewire/users/index.blade.php`
+- `tests/Feature/UserPageTest.php`（テスト2件追加）、`tests/Feature/PagesTest.php`（一覧に自分の名前が出なくなったため確認内容を変更）
+- `docs/spec.md`
+
+### 確認したこと
+- `sail artisan test`：106 passed
+
+### 注意点
+- ユーザーページ（`/users/{id}`）を URL で直接開けば、許可がなくてもアカウント名は見える（アカウント名は常に公開のルールどおり）
+
+---
+
 ## 2026-10-24 ブログ機能を削除
 
 ### 変更内容

@@ -24,7 +24,7 @@ class PagesTest extends TestCase
         $this->get(route('plans.index'))->assertOk()->assertSee($plan->menu_name);
         $this->get(route('plans.create'))->assertOk()->assertSee('通知プランを作成');
         $this->get(route('plans.edit', $plan))->assertOk()->assertSee('通知プランを編集');
-        $this->get(route('users.index'))->assertOk()->assertSee($user->name);
+        $this->get(route('users.index'))->assertOk()->assertSee('ユーザー一覧');
         $this->get(route('permissions.index'))->assertOk()->assertSee('閲覧許可');
         $this->get(route('dashboard'))->assertOk()->assertSee('マイページ');
     }

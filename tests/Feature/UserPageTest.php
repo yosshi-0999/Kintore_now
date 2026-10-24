@@ -143,6 +143,31 @@ class UserPageTest extends TestCase
             ->assertHasErrors(['email' => 'not_in']);
     }
 
+    public function test_user_list_shows_only_users_who_granted_permission(): void
+    {
+        $viewer = User::factory()->create(['name' => 'Viewer']);
+        $granted = User::factory()->create(['name' => 'Granted']);
+        $notGranted = User::factory()->create(['name' => 'NotGranted']);
+        // 自分が見せているだけの相手は対象外
+        $grantedByMe = User::factory()->create(['name' => 'GrantedByMe']);
+        $granted->viewers()->attach($viewer);
+        $viewer->viewers()->attach($grantedByMe);
+
+        $this->actingAs($viewer)->get(route('users.index'))
+            ->assertOk()
+            ->assertSee(route('users.show', $granted), false)
+            ->assertDontSee(route('users.show', $notGranted), false)
+            ->assertDontSee(route('users.show', $grantedByMe), false)
+            ->assertDontSee(route('users.show', $viewer), false);
+    }
+
+    public function test_user_list_shows_message_when_no_one_granted_permission(): void
+    {
+        $this->actingAs(User::factory()->create())->get(route('users.index'))
+            ->assertOk()
+            ->assertSee('まだ閲覧を許可してくれたユーザーはいません。');
+    }
+
     public function test_guest_cannot_view_user_pages(): void
     {
         $this->get(route('users.show', User::factory()->create()))->assertRedirect(route('login'));
