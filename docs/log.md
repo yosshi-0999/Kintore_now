@@ -19,6 +19,29 @@
 
 ---
 
+## 2026-10-24 ユーザーページの各欄を開閉式にする（#19）
+
+### 変更内容
+- ユーザーページ（マイページ）の各欄（自己ベスト・休ませる筋肉・使える筋肉・おすすめの種目・筋トレ内容を記録・記録）を、見出しを押すと中身が開く形にした
+- 最初に開いているのは自己ベストだけ（合意済み）。ただし検索条件付きの URL や2ページ目以降を開いたときは、結果が見えるように記録欄も開く
+- 開閉は HTML の `<details>` で行い、JavaScript を足していない。部品は `x-collapsible-section` にまとめた
+- Livewire が再描画したときに開閉状態が戻らないよう、`<details>` に `wire:ignore.self` を付けた（中身は通常どおり更新される）
+
+### 変更ファイル
+- `resources/views/components/collapsible-section.blade.php`（新規）
+- `resources/views/livewire/users/show.blade.php`
+- `tests/Feature/UserPageTest.php`（テスト2件追加）
+- `docs/spec.md`
+
+### 確認したこと
+- `sail artisan test`：108 passed
+- ブラウザでの見た目・開閉の動作：未確認
+
+### 注意点
+- 開閉状態は保存しない（ページを開き直すと初期状態に戻る）
+
+---
+
 ## 2026-10-24 ユーザー一覧を閲覧許可のあるユーザーだけにする（#20）
 
 ### 変更内容

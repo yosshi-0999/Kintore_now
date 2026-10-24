@@ -105,6 +105,46 @@ class UserPageTest extends TestCase
             ->assertDontSee('82.5kg');
     }
 
+    /**
+     * 開いた状態で表示される欄の見出し
+     *
+     * @return list<string>
+     */
+    private function openSectionTitles(string $html): array
+    {
+        preg_match_all('/<details\b([^>]*)>(.*?)<\/summary>/su', $html, $matches, PREG_SET_ORDER);
+
+        return collect($matches)
+            ->filter(fn (array $m) => preg_match('/\sopen\s/', $m[1].' '))
+            ->map(fn (array $m) => trim(strip_tags($m[2])))
+            ->values()
+            ->all();
+    }
+
+    public function test_only_personal_best_section_is_open_initially(): void
+    {
+        $user = User::factory()->create();
+
+        $html = $this->actingAs($user)->get(route('users.show', $user))
+            ->assertOk()
+            ->assertSee('<details', false)
+            ->getContent();
+
+        $this->assertSame(['自己ベスト'], $this->openSectionTitles($html));
+        $this->assertSame(6, substr_count($html, '<details'));
+    }
+
+    public function test_records_section_is_open_when_searching_by_url(): void
+    {
+        $user = User::factory()->create();
+
+        $html = $this->actingAs($user)->get(route('users.show', ['user' => $user, 'keyword' => 'ベンチ']))
+            ->assertOk()
+            ->getContent();
+
+        $this->assertSame(['自己ベスト', '記録'], $this->openSectionTitles($html));
+    }
+
     public function test_owner_without_personal_best_sees_how_to_add_one(): void
     {
         $user = User::factory()->create();

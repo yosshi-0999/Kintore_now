@@ -141,18 +141,17 @@ new class extends Component {
     @unless ($canView)
         <flux:text>このユーザーの記録は、許可されたユーザーのみ閲覧できます。</flux:text>
     @else
-        <div class="rounded-xl border border-amber-300 bg-gradient-to-br from-amber-50 to-orange-50 p-4 dark:border-amber-700 dark:from-amber-950 dark:to-orange-950">
-            <div class="flex items-center gap-2">
+        <x-collapsible-section title="自己ベスト" open class="border-amber-300 bg-gradient-to-br from-amber-50 to-orange-50 dark:border-amber-700 dark:from-amber-950 dark:to-orange-950">
+            <x-slot:icon>
                 <flux:icon.trophy class="size-6 text-amber-500" />
-                <flux:heading size="lg">自己ベスト</flux:heading>
-            </div>
+            </x-slot:icon>
 
             @if ($personalBests->isEmpty())
-                <flux:text class="mt-2">
+                <flux:text>
                     {{ $isSelf ? '「種目から入力」で種目を選んで記録すると、ここに種目ごとの自己ベストが表示されます。' : 'まだ自己ベストはありません。' }}
                 </flux:text>
             @else
-                <div class="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                     @foreach ($personalBests as $best)
                         <div class="rounded-lg bg-white/80 p-3 shadow-sm dark:bg-zinc-900/60" wire:key="best-{{ $best->exercise_id }}">
                             <div class="text-sm font-semibold text-amber-700 dark:text-amber-300">{{ $best->exercise->name }}</div>
@@ -167,34 +166,31 @@ new class extends Component {
                     @endforeach
                 </div>
             @endif
-        </div>
+        </x-collapsible-section>
 
-        <div class="grid gap-6 md:grid-cols-2">
-            <div class="rounded-xl border border-zinc-200 p-4 dark:border-zinc-700">
-                <flux:heading size="lg">休ませる筋肉</flux:heading>
+        <div class="grid items-start gap-6 md:grid-cols-2">
+            <x-collapsible-section title="休ませる筋肉">
                 @forelse ($resting as $item)
-                    <div class="mt-2 flex justify-between text-sm" wire:key="resting-{{ $item['muscle']->id }}">
+                    <div class="mt-2 flex justify-between text-sm first:mt-0" wire:key="resting-{{ $item['muscle']->id }}">
                         <span>{{ $item['muscle']->name }}</span>
                         <span class="text-zinc-500">{{ $item['recovers_at']->format('m/d H:i') }} に回復</span>
                     </div>
                 @empty
-                    <flux:text class="mt-2">休息中の筋肉はありません。</flux:text>
+                    <flux:text>休息中の筋肉はありません。</flux:text>
                 @endforelse
-            </div>
+            </x-collapsible-section>
 
-            <div class="rounded-xl border border-zinc-200 p-4 dark:border-zinc-700">
-                <flux:heading size="lg">使える筋肉</flux:heading>
-                <div class="mt-2 flex flex-wrap gap-2">
+            <x-collapsible-section title="使える筋肉">
+                <div class="flex flex-wrap gap-2">
                     @foreach ($available as $muscle)
                         <span wire:key="available-{{ $muscle->id }}" class="rounded-full bg-zinc-100 px-3 py-1 text-sm dark:bg-zinc-700">{{ $muscle->name }}</span>
                     @endforeach
                 </div>
-            </div>
+            </x-collapsible-section>
         </div>
 
-        <div class="rounded-xl border border-zinc-200 p-4 dark:border-zinc-700">
-            <flux:heading size="lg">おすすめの種目</flux:heading>
-            <div class="mt-2 grid gap-1 text-sm sm:grid-cols-2 lg:grid-cols-3">
+        <x-collapsible-section title="おすすめの種目">
+            <div class="grid gap-1 text-sm sm:grid-cols-2 lg:grid-cols-3">
                 @forelse ($suggestions as $exercise)
                     <div wire:key="suggestion-{{ $exercise->id }}">
                         {{ $exercise->name }}<span class="text-zinc-500">（{{ $exercise->muscle->name }}）</span>
@@ -203,19 +199,17 @@ new class extends Component {
                     <flux:text>今はすべての筋肉が休息中です。しっかり休みましょう。</flux:text>
                 @endforelse
             </div>
-        </div>
+        </x-collapsible-section>
 
         @if ($isSelf)
-            <div class="rounded-xl border border-zinc-200 p-4 dark:border-zinc-700">
-                <flux:heading size="lg" class="mb-4">筋トレ内容を記録</flux:heading>
+            <x-collapsible-section title="筋トレ内容を記録">
                 <livewire:workouts.form />
-            </div>
+            </x-collapsible-section>
         @endif
 
-        <div>
-            <flux:heading size="lg">記録</flux:heading>
-
-            <div class="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        {{-- 検索条件や2ページ目以降の URL で開いたときは、結果が見えるように開いておく --}}
+        <x-collapsible-section title="記録" :open="$isSearching || $workouts->currentPage() > 1">
+            <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                 <flux:input wire:model.live.debounce.400ms="keyword" label="メニュー名" placeholder="例：ベンチ" />
 
                 <flux:select wire:model.live="muscle_id" label="筋肉">
@@ -260,6 +254,6 @@ new class extends Component {
             <div class="mt-4">
                 {{ $workouts->links() }}
             </div>
-        </div>
+        </x-collapsible-section>
     @endunless
 </section>
