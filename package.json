@@ -23,9 +23,6 @@
     "autoprefixer": "^10.4.20",
     
         
-    "axios": "^1.7.4",
-    
-        
     "chart.js": "4.5.1",
     
         
@@ -58,7 +55,7 @@
     "allowScripts": {
     
         
-    "esbuild@0.24.2": true
+    "esbuild@0.25.12": true
     
     }
 }
