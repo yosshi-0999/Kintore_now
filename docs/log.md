@@ -19,6 +19,32 @@
 
 ---
 
+## 2026-10-24 種目ごとの重量ランキング（#22）
+
+### 変更内容
+- サイドバーから開ける「ランキング」（`/ranking`）を追加。種目を選ぶと、各参加者の自己ベスト重量の順に並べる
+- 参加者は、自分と、自分に閲覧を許可しているユーザー。他人の記録を扱うため、各参加者を `UserPolicy::viewRecords` に通している
+- 重量は自己ベスト（`PersonalBestService`）の値を使い、自己ベスト欄と数字をそろえた。自重の自己ベストは除く。同じ重量は同じ順位（1位, 1位, 3位）で、先に達成した人を上に表示する
+- issue にあった総合ランキング（重量・回数・セット数をまとめたもの）は作らないことにした（合意済み）
+- 参加者全員の自己ベストを1回のクエリで取れるよう、`PersonalBestService::forUsers()` を追加。`forUser()` はこれを使う形にした（結果は変わらない）
+
+### 変更ファイル
+- `app/Services/WeightRankingService.php`（新規）、`app/Services/PersonalBestService.php`
+- `resources/views/livewire/ranking/index.blade.php`（新規）
+- `routes/web.php`、`resources/views/components/layouts/app/sidebar.blade.php`
+- `tests/Feature/WeightRankingTest.php`（新規）
+- `docs/spec.md`
+
+### 確認したこと
+- `sail artisan test`：122 passed（既存の自己ベストのテストもそのまま通る）
+- ブラウザでの見た目：未確認
+
+### 注意点
+- Policy の確認は参加者ごとに1クエリかかる（参加者が多くなったら見直す）
+- 期間（今月など）での絞り込みはない。全期間の自己ベストで比べる
+
+---
+
 ## 2026-10-24 種目ごとの最高重量の推移グラフ（#21）
 
 ### 変更内容

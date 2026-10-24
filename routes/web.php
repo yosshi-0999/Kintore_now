@@ -32,6 +32,8 @@ Route::middleware(['auth'])->group(function () {
     Volt::route('plans/{plan}/edit', 'plans.edit')->name('plans.edit');
 
     Volt::route('permissions', 'permissions.index')->name('permissions.index');
+
+    Volt::route('ranking', 'ranking.index')->name('ranking.index');
 });
 
 require __DIR__.'/auth.php';
