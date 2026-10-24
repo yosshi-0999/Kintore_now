@@ -19,6 +19,33 @@
 
 ---
 
+## 2026-10-25 npm の脆弱性を解消し、lint の CI で整形崩れを検出する
+
+### 変更内容
+- `npm audit` で critical 2件・high 9件などが出ていたため、`npm audit fix` で解消した（0件）。主にビルド用ツール（vite・rollup・postcss など）で、vite の開発サーバーは Sail で 5173 番を公開しているため対応した
+- 公開直後の版を避けるため `--before=2026-10-10` を付けて、公開から2週間以上たった版だけで解決した（vite 6.1.1 → 6.4.4、rollup 4.34.8 → 4.64.3 など）
+- 使われていない `axios` を削除（脆弱性があり、`resources/js` から読み込んでいなかったため）
+- esbuild が 0.25.12 に上がったため、`package.json` の `allowScripts` の対象を 0.24.2 から 0.25.12 に変更（そのままだとインストール時にスクリプトがブロックされ警告が出る）
+- `.github/workflows/lint.yml` の Pint を `--test` 付きにした。これまでは整形するだけで失敗せず、自動コミットもコメントアウトされていたため、崩れがあっても CI が通っていた
+- 整形が崩れていたスターターキットの6ファイルを Pint で整形（import の追加と並び替えのみ。動作は変わらない）
+
+### 変更ファイル
+- `package.json`、`package-lock.json`（npm がファイル全体を書き直したため差分が大きい）
+- `.github/workflows/lint.yml`
+- `config/auth.php`、`routes/auth.php`、`bootstrap/providers.php`、`database/factories/UserFactory.php`、`tests/Pest.php`、`app/Http/Controllers/Auth/VerifyEmailController.php`
+
+### 確認したこと
+- `sail npm audit`：0 vulnerabilities
+- `sail npm run build`：成功
+- `sail bin pint --test`：passed
+- `sail artisan test`：このコミットに含まれない作業中の変更（`UserPageTest.php` など）が原因の3件以外は通過（119 passed）
+
+### 注意点
+- pull 後に `sail npm install` が必要
+- `bootstrap/providers.php` に、存在しない `App\Providers\FolioServiceProvider` が書かれている（プロジェクト作成時から）。今回は整形のみで触っていない
+
+---
+
 ## 2026-10-24 README.md を作成
 
 ### 変更内容
