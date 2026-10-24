@@ -19,6 +19,36 @@
 
 ---
 
+## 2026-10-24 種目ごとの最高重量の推移グラフ（#21）
+
+### 変更内容
+- ユーザーページに「最高重量の推移」欄を追加。種目を選ぶと、その種目の日ごとの最高重量を折れ線グラフで表示する。記録と同じく、本人と閲覧を許可されたユーザーだけが見られる
+- 対象は自己ベストと同じく種目が紐付いた記録。重量のない（自重）記録は除く。集計は `WeightProgressService` に分けた
+- グラフ描画のため `chart.js` を追加（合意済み）。最新の 4.6.1 は公開から2日しかたっておらず、4.6.0 を飛ばして1年ぶりに出た版だったため避け、4.5.1 に固定した（`^` なし）
+- Chart.js は `import()` で、グラフを表示するときだけ読み込む（全ページで 147KB 読み込むのを避けるため。`app.js` 本体は 2KB）
+- Livewire が再描画してもグラフを作り直さないよう `wire:ignore` を付け、データが変わったときだけ `wire:key` の変化で作り直す
+- 欄は最初は閉じておく（#19 で、最初に開くのは自己ベストだけと決めたため）
+
+### 変更ファイル
+- `app/Services/WeightProgressService.php`（新規）
+- `resources/js/app.js`
+- `resources/views/livewire/users/show.blade.php`
+- `package.json`、`package-lock.json`
+- `tests/Feature/WeightProgressServiceTest.php`（新規）、`tests/Feature/UserPageTest.php`
+- `AGENTS.md`（技術スタックに Chart.js を追記）、`docs/spec.md`
+
+### 確認したこと
+- `sail artisan test`：113 passed
+- `sail npm run build`：成功
+- ブラウザでのグラフ表示：未確認（ヘッドレスブラウザがないため）
+
+### 注意点
+- pull 後に `sail npm install` が必要
+- 値は「日ごとの最高重量」。これまでの自己ベストの推移（階段状に上がるグラフ）にしたい場合は `WeightProgressService` の集計を変える
+- 横軸は日付を等間隔で並べている（日付の間隔は反映しない）
+
+---
+
 ## 2026-10-24 ユーザーページの各欄を開閉式にする（#19）
 
 ### 変更内容

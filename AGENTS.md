@@ -20,6 +20,7 @@ AIは作業を始める前に、必ずこのファイルと「参照ドキュメ
 - Livewire
 - DB：開発環境は MySQL（Laravel Sail）
 - メール：Laravel の Notification / GMail（開発環境はログ出力）
+- グラフ：Chart.js（npm。グラフのあるページでだけ読み込む）
 
 バージョンの正は `composer.json` です。推測せず、そこを確認してください。
 

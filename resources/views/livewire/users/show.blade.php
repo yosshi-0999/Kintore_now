@@ -4,6 +4,7 @@ use App\Models\Muscle;
 use App\Models\User;
 use App\Services\MuscleRestService;
 use App\Services\PersonalBestService;
+use App\Services\WeightProgressService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Validator;
@@ -119,6 +120,7 @@ new class extends Component {
             'canView' => true,
             'isSelf' => Auth::user()->is($this->user),
             'personalBests' => app(PersonalBestService::class)->forUser($this->user),
+            'weightProgress' => app(WeightProgressService::class)->forUser($this->user),
             'resting' => $rest->restingMuscles($this->user),
             'available' => $rest->availableMuscles($this->user),
             'suggestions' => $rest->suggestedExercises($this->user),
@@ -164,6 +166,33 @@ new class extends Component {
                             <div class="mt-1 text-xs text-zinc-500">{{ $best->performed_at->format('Y/m/d') }} 達成</div>
                         </div>
                     @endforeach
+                </div>
+            @endif
+        </x-collapsible-section>
+
+        <x-collapsible-section title="最高重量の推移">
+            @if ($weightProgress->isEmpty())
+                <flux:text>
+                    {{ $isSelf ? '「種目から入力」で種目を選び、重量を入れて記録すると、ここに種目ごとの推移が表示されます。' : 'まだ表示できる記録がありません。' }}
+                </flux:text>
+            @else
+                {{-- データが変わったら作り直す（wire:key が変わると要素ごと置き換わる）。それ以外の再描画ではグラフに触らない --}}
+                <div
+                    wire:ignore
+                    wire:key="weight-chart-{{ md5($weightProgress->toJson()) }}"
+                    x-data="weightChart(@js($weightProgress))"
+                    class="space-y-3"
+                >
+                    <flux:select x-model.number="exerciseId" label="種目" class="max-w-xs">
+                        @foreach ($weightProgress as $series)
+                            <flux:select.option value="{{ $series['exercise_id'] }}">{{ $series['name'] }}</flux:select.option>
+                        @endforeach
+                    </flux:select>
+
+                    <div class="h-64">
+                        <canvas x-ref="canvas" aria-label="最高重量の推移グラフ" role="img"></canvas>
+                    </div>
+                    <flux:text size="sm">日ごとの最高重量です（自重の記録は含みません）。</flux:text>
                 </div>
             @endif
         </x-collapsible-section>

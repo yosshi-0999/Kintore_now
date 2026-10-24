@@ -131,7 +131,7 @@ class UserPageTest extends TestCase
             ->getContent();
 
         $this->assertSame(['自己ベスト'], $this->openSectionTitles($html));
-        $this->assertSame(6, substr_count($html, '<details'));
+        $this->assertSame(7, substr_count($html, '<details'));
     }
 
     public function test_records_section_is_open_when_searching_by_url(): void
@@ -143,6 +143,43 @@ class UserPageTest extends TestCase
             ->getContent();
 
         $this->assertSame(['自己ベスト', '記録'], $this->openSectionTitles($html));
+    }
+
+    public function test_weight_chart_is_shown_to_owner_and_permitted_user_only(): void
+    {
+        $owner = User::factory()->create();
+        $bench = Exercise::factory()->create(['name' => 'ベンチプレス']);
+        Workout::factory()->for($owner)->create([
+            'exercise_id' => $bench->id,
+            'weight' => 82.5,
+            'performed_at' => '2026-10-16 10:00:00',
+        ]);
+        $viewer = User::factory()->create();
+        $owner->viewers()->attach($viewer);
+
+        foreach ([$owner, $viewer] as $user) {
+            $this->actingAs($user)
+                ->get(route('users.show', $owner))
+                ->assertOk()
+                ->assertSee('最高重量の推移')
+                ->assertSee('weightChart(', false)
+                ->assertSee('2026-10-16');
+        }
+
+        $this->actingAs(User::factory()->create())
+            ->get(route('users.show', $owner))
+            ->assertDontSee('最高重量の推移')
+            ->assertDontSee('weightChart(', false);
+    }
+
+    public function test_weight_chart_shows_message_without_weighted_records(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)
+            ->get(route('users.show', $user))
+            ->assertSee('ここに種目ごとの推移が表示されます')
+            ->assertDontSee('weightChart(', false);
     }
 
     public function test_owner_without_personal_best_sees_how_to_add_one(): void
