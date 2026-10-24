@@ -57,6 +57,7 @@ Docker が必要です。コマンドはリポジトリのフォルダで実行�
 # 1. クローン
 git clone https://github.com/yosshi-0999/Kintore_now.git
 cd Kintore_now
+git switch develop   # 作業するブランチに切り替える
 
 # 2. PHP のパッケージを入れる（PHP がなくても Docker で実行できる）
 docker run --rm \
@@ -78,7 +79,7 @@ cp .env.example .env
 ./vendor/bin/sail npm install
 ```
 
-`npm install` でエラーが出たときは、`./vendor/bin/sail npm install-scripts approve esbuild` を実行してから、もう一度 `npm install` してください。古いコンテナが残っていると起動に失敗することがあります。
+うまくいかないときは、下の「困ったとき」を見てください。
 
 ### 毎回
 
@@ -107,6 +108,17 @@ sail composer install   # composer.json が変わったとき
 sail npm install        # package.json が変わったとき
 sail artisan migrate    # マイグレーションが増えたとき
 ```
+
+## 困ったとき
+
+| 症状 | 対処 |
+|---|---|
+| `npm install` でエラーが出る | `sail npm install-scripts approve esbuild` を実行してから、もう一度 `sail npm install` する |
+| `sail up` に失敗する | 古いコンテナが残っていないか確認する（`docker ps -a`）。80・3306・5173・8080 番ポートを他のアプリが使っていないかも確認する |
+| `npm run dev` のポートが重なる | ホストではなく、コンテナの中で動かす（`sail npm run dev`） |
+| `.env` の DB ユーザーやパスワードを変えたら DB につながらない | MySQL のデータは最初に起動したときの設定で作られているため。`sail down -v` で作り直す（**DB のデータはすべて消える**）。その後 `sail up -d` と `sail artisan migrate --seed` |
+| 画面が英語になる | 古い `.env` は `APP_LOCALE=en` のまま。`ja` に変えて `sail artisan config:clear` を実行する |
+| 手元では通るテストが CI で落ちる | 手元（Sail）は PHP 8.5、CI は PHP 8.4。バージョン差を疑う |
 
 ## メール通知の確認
 
@@ -156,18 +168,18 @@ sail artisan migrate    # マイグレーションが増えたとき
 | ファイル | 内容 |
 |---|---|
 | [AGENTS.md](AGENTS.md) | 開発ルール（人も AI も従う）。機能の仕様、DB・コーディングのルール、ブランチ運用 |
-| [docs/spec.md](docs/spec.md) | 仕様書（機能要件・ページ構成） |
+| [docs/spec.md](docs/spec.md) | 仕様書（機能要件・各機能の詳細・ページ構成・決定事項・未決事項） |
 | [docs/database-design.md](docs/database-design.md) | 現行のデータベース設計。DB に関する判断はこれが正 |
-| [docs/how_to_start.md](docs/how_to_start.md) | 開発環境構築のメモ |
-| [docs/next_commit.md](docs/next_commit.md) | 次にやること。作業前に読む |
-| [docs/log.md](docs/log.md) | 変更の記録（新しいものが上） |
+
+作業の予定と未決事項は [GitHub の issue](https://github.com/yosshi-0999/Kintore_now/issues)、変更の記録は PR の説明と git の履歴で管理しています。
 
 ## 開発の進め方（要点）
 
 詳しくは [AGENTS.md](AGENTS.md) を見てください。
 
-- 作業は issue ごとにブランチを切る（例：`feature/12-workout-form`）。PR は `develop` に向けて出し、説明に `Closes #番号` を書く
-- コミットの前に `docs/log.md` と `docs/next_commit.md` を更新し、同じコミットに入れる
+- 作業は issue ごとにブランチを切る（例：`feature/12-workout-form`）。PR は `develop` に向けて出し、説明に変更内容・確認したことと `Closes #番号` を書く
+- やり残しや新しく出てきた課題は issue にする
+- 仕様や設計を変えたら、`docs/spec.md`・`docs/database-design.md`・この README も同じ PR で直す
 - `docs/database-design.md` にないテーブル・カラムは勝手に足さない。マージ済みのマイグレーションは編集しない
 - 新しいパッケージの追加はチームで相談してから
 - `.env` はコミットしない。環境変数を足したら `.env.example` にも書く
