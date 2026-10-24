@@ -17,7 +17,7 @@ class UserPageTest extends TestCase
     private function ownerWithWorkout(): User
     {
         $owner = User::factory()->create(['name' => 'Owner']);
-        $workout = Workout::factory()->for($owner)->create(['menu_name' => 'ひみつのメニュー']);
+        $workout = Workout::factory()->for($owner)->create(['menu_name' => 'テスト用メニュー']);
         $workout->muscles()->attach(Muscle::factory()->create());
 
         return $owner;
@@ -42,7 +42,7 @@ class UserPageTest extends TestCase
             ->get(route('users.show', $owner))
             ->assertOk()
             ->assertSee('Owner')
-            ->assertDontSee('ひみつのメニュー')
+            ->assertDontSee('テスト用メニュー')
             ->assertDontSee('60kg × 10回 × 3セット')
             ->assertSee('許可されたユーザーのみ閲覧できます');
     }
@@ -56,7 +56,7 @@ class UserPageTest extends TestCase
         $this->actingAs($viewer)
             ->get(route('users.show', $owner))
             ->assertOk()
-            ->assertSee('ひみつのメニュー')
+            ->assertSee('テスト用メニュー')
             ->assertSee('60kg × 10回 × 3セット')
             ->assertDontSee('筋トレ内容を記録');
     }

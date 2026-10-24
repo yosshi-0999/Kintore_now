@@ -19,6 +19,26 @@
 
 ---
 
+## 2026-10-25 使われていない ViewPermission モデルを削除
+
+### 変更内容
+- `app/Models/ViewPermission.php` を削除。閲覧許可は `User` の `viewers()` / `viewableOwners()`（`belongsToMany`）で扱っていて、このモデルはどこからも使われていなかった。`view_permissions` テーブルはそのまま
+- `UserPolicy` のコメントに、アカウント名は公開だがユーザー一覧には載せない（#20）ことを追記
+- `UserPageTest` のテスト用メニュー名を `テスト用メニュー` に変更（画面の他の場所に出てこない文字列にするため。`メニュー` だと「メニュー名」などに一致して `assertDontSee` が失敗する）
+
+### 変更ファイル
+- `app/Models/ViewPermission.php`（削除）、`app/Policies/UserPolicy.php`、`tests/Feature/UserPageTest.php`
+
+### 確認したこと
+- `sail artisan test`：122 passed
+- `sail bin pint --test`：passed
+- リポジトリ内に `ViewPermission` への参照が残っていないことを確認
+
+### 注意点
+- 後で閲覧の申請・承認（`view_permissions` に `status` を追加）を作るときは、モデルを作り直すとよい
+
+---
+
 ## 2026-10-25 npm の脆弱性を解消し、lint の CI で整形崩れを検出する
 
 ### 変更内容
