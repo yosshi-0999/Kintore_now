@@ -1,7 +1,6 @@
 <?php
 
 use App\Models\Muscle;
-use App\Services\BlogPostService;
 use Illuminate\Support\Facades\Route;
 use Livewire\Volt\Volt;
 
@@ -33,9 +32,6 @@ Route::middleware(['auth'])->group(function () {
     Volt::route('plans/{plan}/edit', 'plans.edit')->name('plans.edit');
 
     Volt::route('permissions', 'permissions.index')->name('permissions.index');
-
-    Volt::route('blog', 'blog.index')->name('blog.index');
-    Volt::route('blog/{slug}', 'blog.show')->where('slug', BlogPostService::SLUG_PATTERN)->name('blog.show');
 });
 
 require __DIR__.'/auth.php';

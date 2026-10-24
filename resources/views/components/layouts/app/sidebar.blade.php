@@ -22,7 +22,6 @@
                     <flux:navlist.item icon="bell" :href="route('plans.index')" :current="request()->routeIs('plans.*')" wire:navigate>通知プラン</flux:navlist.item>
                     <flux:navlist.item icon="users" :href="route('users.index')" :current="request()->routeIs('users.index')" wire:navigate>ユーザー一覧</flux:navlist.item>
                     <flux:navlist.item icon="lock-open" :href="route('permissions.index')" :current="request()->routeIs('permissions.index')" wire:navigate>閲覧許可</flux:navlist.item>
-                    <flux:navlist.item icon="newspaper" :href="route('blog.index')" :current="request()->routeIs('blog.*')" wire:navigate>ブログ</flux:navlist.item>
                 </flux:navlist.group>
             </flux:navlist>
 

@@ -19,6 +19,27 @@
 
 ---
 
+## 2026-10-24 ブログ機能を削除
+
+### 変更内容
+- ブログ記事（F11）の処理を削除（依頼による）。2026-10-17 の「ブログ記事追加」で入ったもののうち、ブログ専用のファイル・ルート・サイドバーのリンクを消した
+- 同じコミットに含まれていた日本語化（`lang/ja`、`phpunit.xml` の `APP_LOCALE` など）と `composer.json` の Livewire 指定は、ブログと関係がないので残した
+- `docs/spec.md` のブログに関する記述を作成前の状態に戻した（F11 は任意機能・未作成として残す）
+
+### 変更ファイル
+- 削除：`app/Services/BlogPost.php`、`app/Services/BlogPostService.php`、`resources/views/livewire/blog/index.blade.php`、`resources/views/livewire/blog/show.blade.php`、`resources/posts/*.md`（3本）、`tests/Feature/BlogTest.php`
+- 編集：`routes/web.php`、`resources/views/components/layouts/app/sidebar.blade.php`、`docs/spec.md`
+
+### 確認したこと
+- `sail artisan test`：104 passed
+- `./vendor/bin/pint --test routes/web.php`：passed
+- `php artisan route:list` に blog のルートがないことを確認
+
+### 注意点
+- 既存の記事（Markdown 3本）も削除した。必要になったら git の履歴（2ba2ecd）から戻せる
+
+---
+
 
 
 ---
