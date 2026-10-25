@@ -143,62 +143,102 @@ new class extends Component {
     @unless ($canView)
         <flux:text>このユーザーの記録は、許可されたユーザーのみ閲覧できます。</flux:text>
     @else
-        <x-collapsible-section title="自己ベスト" open class="border-amber-300 bg-gradient-to-br from-amber-50 to-orange-50 dark:border-amber-700 dark:from-amber-950 dark:to-orange-950">
-            <x-slot:icon>
-                <flux:icon.trophy class="size-6 text-amber-500" />
-            </x-slot:icon>
+        {{--
+            今の状態を見る欄はタブにまとめて、1つずつ表示する（縦に長くならないように）。
+            切り替えは Alpine で行い、サーバーには問い合わせない。最初は自己ベストだけを表示し、
+            ほかのパネルは JS が読み込まれる前に見えないよう display:none で出力する。
+            タブとパネルには wire:ignore.self を付け、Livewire の再描画で選択中のタブが戻らないようにする（中身は通常どおり更新される）
+        --}}
+        @php
+            $tabs = [
+                'best' => '自己ベスト',
+                'progress' => '最高重量の推移',
+                'resting' => '休ませる筋肉',
+                'available' => '使える筋肉',
+                'suggestions' => 'おすすめの種目',
+            ];
+        @endphp
 
-            @if ($personalBests->isEmpty())
-                <flux:text>
-                    {{ $isSelf ? '「種目から入力」で種目を選んで記録すると、ここに種目ごとの自己ベストが表示されます。' : 'まだ自己ベストはありません。' }}
-                </flux:text>
-            @else
-                <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                    @foreach ($personalBests as $best)
-                        <div class="rounded-lg bg-white/80 p-3 shadow-sm dark:bg-zinc-900/60" wire:key="best-{{ $best->exercise_id }}">
-                            <div class="text-sm font-semibold text-amber-700 dark:text-amber-300">{{ $best->exercise->name }}</div>
-                            <div class="mt-1 flex items-baseline gap-2">
-                                <span class="text-3xl font-bold">{{ $best->weight !== null ? $best->weight.'kg' : '自重' }}</span>
-                                @if ($best->reps !== null)
-                                    <span class="text-sm text-zinc-600 dark:text-zinc-300">× {{ $best->reps }}回 × {{ $best->sets }}セット</span>
-                                @endif
+        <div x-data="{ tab: 'best' }" class="rounded-xl border border-zinc-200 dark:border-zinc-700">
+            <div role="tablist" aria-label="ユーザーの状態" class="flex gap-1 overflow-x-auto border-b border-zinc-200 px-2 dark:border-zinc-700">
+                @foreach ($tabs as $key => $label)
+                    <button
+                        wire:ignore.self
+                        type="button"
+                        role="tab"
+                        id="tab-{{ $key }}"
+                        aria-controls="panel-{{ $key }}"
+                        aria-selected="{{ $key === 'best' ? 'true' : 'false' }}"
+                        :aria-selected="(tab === '{{ $key }}').toString()"
+                        x-on:click="tab = '{{ $key }}'"
+                        @class([
+                            '-mb-px flex shrink-0 items-center gap-1 border-b-2 px-3 py-3 text-sm font-medium whitespace-nowrap',
+                            'border-amber-500 text-amber-700 dark:text-amber-300' => $key === 'best',
+                            'border-transparent text-zinc-500' => $key !== 'best',
+                        ])
+                        :class="tab === '{{ $key }}'
+                            ? 'border-amber-500 text-amber-700 dark:text-amber-300'
+                            : 'border-transparent text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200'"
+                    >
+                        @if ($key === 'best')
+                            <flux:icon.trophy class="size-4 text-amber-500" />
+                        @endif
+                        {{ $label }}
+                    </button>
+                @endforeach
+            </div>
+
+            <div wire:ignore.self role="tabpanel" id="panel-best" aria-labelledby="tab-best" x-show="tab === 'best'" class="p-4">
+                @if ($personalBests->isEmpty())
+                    <flux:text>
+                        {{ $isSelf ? '「種目から入力」で種目を選んで記録すると、ここに種目ごとの自己ベストが表示されます。' : 'まだ自己ベストはありません。' }}
+                    </flux:text>
+                @else
+                    <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                        @foreach ($personalBests as $best)
+                            <div class="rounded-lg bg-white/80 p-3 shadow-sm dark:bg-zinc-900/60" wire:key="best-{{ $best->exercise_id }}">
+                                <div class="text-sm font-semibold text-amber-700 dark:text-amber-300">{{ $best->exercise->name }}</div>
+                                <div class="mt-1 flex items-baseline gap-2">
+                                    <span class="text-3xl font-bold">{{ $best->weight !== null ? $best->weight.'kg' : '自重' }}</span>
+                                    @if ($best->reps !== null)
+                                        <span class="text-sm text-zinc-600 dark:text-zinc-300">× {{ $best->reps }}回 × {{ $best->sets }}セット</span>
+                                    @endif
+                                </div>
+                                <div class="mt-1 text-xs text-zinc-500">{{ $best->performed_at->format('Y/m/d') }} 達成</div>
                             </div>
-                            <div class="mt-1 text-xs text-zinc-500">{{ $best->performed_at->format('Y/m/d') }} 達成</div>
-                        </div>
-                    @endforeach
-                </div>
-            @endif
-        </x-collapsible-section>
-
-        <x-collapsible-section title="最高重量の推移">
-            @if ($weightProgress->isEmpty())
-                <flux:text>
-                    {{ $isSelf ? '「種目から入力」で種目を選び、重量を入れて記録すると、ここに種目ごとの推移が表示されます。' : 'まだ表示できる記録がありません。' }}
-                </flux:text>
-            @else
-                {{-- データが変わったら作り直す（wire:key が変わると要素ごと置き換わる）。それ以外の再描画ではグラフに触らない --}}
-                <div
-                    wire:ignore
-                    wire:key="weight-chart-{{ md5($weightProgress->toJson()) }}"
-                    x-data="weightChart(@js($weightProgress))"
-                    class="space-y-3"
-                >
-                    <flux:select x-model.number="exerciseId" label="種目" class="max-w-xs">
-                        @foreach ($weightProgress as $series)
-                            <flux:select.option value="{{ $series['exercise_id'] }}">{{ $series['name'] }}</flux:select.option>
                         @endforeach
-                    </flux:select>
-
-                    <div class="h-64">
-                        <canvas x-ref="canvas" aria-label="最高重量の推移グラフ" role="img"></canvas>
                     </div>
-                    <flux:text size="sm">日ごとの最高重量です（自重の記録は含みません）。</flux:text>
-                </div>
-            @endif
-        </x-collapsible-section>
+                @endif
+            </div>
 
-        <div class="grid items-start gap-6 md:grid-cols-2">
-            <x-collapsible-section title="休ませる筋肉">
+            <div wire:ignore.self role="tabpanel" id="panel-progress" aria-labelledby="tab-progress" x-show="tab === 'progress'" style="display: none" class="p-4">
+                @if ($weightProgress->isEmpty())
+                    <flux:text>
+                        {{ $isSelf ? '「種目から入力」で種目を選び、重量を入れて記録すると、ここに種目ごとの推移が表示されます。' : 'まだ表示できる記録がありません。' }}
+                    </flux:text>
+                @else
+                    {{-- データが変わったら作り直す（wire:key が変わると要素ごと置き換わる）。それ以外の再描画ではグラフに触らない --}}
+                    <div
+                        wire:ignore
+                        wire:key="weight-chart-{{ md5($weightProgress->toJson()) }}"
+                        x-data="weightChart(@js($weightProgress))"
+                        class="space-y-3"
+                    >
+                        <flux:select x-model.number="exerciseId" label="種目" class="max-w-xs">
+                            @foreach ($weightProgress as $series)
+                                <flux:select.option value="{{ $series['exercise_id'] }}">{{ $series['name'] }}</flux:select.option>
+                            @endforeach
+                        </flux:select>
+
+                        <div class="h-64">
+                            <canvas x-ref="canvas" aria-label="最高重量の推移グラフ" role="img"></canvas>
+                        </div>
+                        <flux:text size="sm">日ごとの最高重量です（自重の記録は含みません）。</flux:text>
+                    </div>
+                @endif
+            </div>
+
+            <div wire:ignore.self role="tabpanel" id="panel-resting" aria-labelledby="tab-resting" x-show="tab === 'resting'" style="display: none" class="p-4">
                 @forelse ($resting as $item)
                     <div class="mt-2 flex justify-between text-sm first:mt-0" wire:key="resting-{{ $item['muscle']->id }}">
                         <span>{{ $item['muscle']->name }}</span>
@@ -207,28 +247,28 @@ new class extends Component {
                 @empty
                     <flux:text>休息中の筋肉はありません。</flux:text>
                 @endforelse
-            </x-collapsible-section>
+            </div>
 
-            <x-collapsible-section title="使える筋肉">
+            <div wire:ignore.self role="tabpanel" id="panel-available" aria-labelledby="tab-available" x-show="tab === 'available'" style="display: none" class="p-4">
                 <div class="flex flex-wrap gap-2">
                     @foreach ($available as $muscle)
                         <span wire:key="available-{{ $muscle->id }}" class="rounded-full bg-zinc-100 px-3 py-1 text-sm dark:bg-zinc-700">{{ $muscle->name }}</span>
                     @endforeach
                 </div>
-            </x-collapsible-section>
-        </div>
-
-        <x-collapsible-section title="おすすめの種目">
-            <div class="grid gap-1 text-sm sm:grid-cols-2 lg:grid-cols-3">
-                @forelse ($suggestions as $exercise)
-                    <div wire:key="suggestion-{{ $exercise->id }}">
-                        {{ $exercise->name }}<span class="text-zinc-500">（{{ $exercise->muscle->name }}）</span>
-                    </div>
-                @empty
-                    <flux:text>今はすべての筋肉が休息中です。しっかり休みましょう。</flux:text>
-                @endforelse
             </div>
-        </x-collapsible-section>
+
+            <div wire:ignore.self role="tabpanel" id="panel-suggestions" aria-labelledby="tab-suggestions" x-show="tab === 'suggestions'" style="display: none" class="p-4">
+                <div class="grid gap-1 text-sm sm:grid-cols-2 lg:grid-cols-3">
+                    @forelse ($suggestions as $exercise)
+                        <div wire:key="suggestion-{{ $exercise->id }}">
+                            {{ $exercise->name }}<span class="text-zinc-500">（{{ $exercise->muscle->name }}）</span>
+                        </div>
+                    @empty
+                        <flux:text>今はすべての筋肉が休息中です。しっかり休みましょう。</flux:text>
+                    @endforelse
+                </div>
+            </div>
+        </div>
 
         @if ($isSelf)
             <x-collapsible-section title="筋トレ内容を記録">
