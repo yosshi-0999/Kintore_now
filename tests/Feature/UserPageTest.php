@@ -96,7 +96,7 @@ class UserPageTest extends TestCase
             $this->actingAs($user)
                 ->get(route('users.show', $owner))
                 ->assertOk()
-                ->assertSeeInOrder(['自己ベスト', 'ベンチプレス', '82.5kg', '× 5回 × 3セット', '2026/10/16 達成', '休ませる筋肉']);
+                ->assertSeeInOrder(['id="panel-best"', 'ベンチプレス', '82.5kg', '× 5回 × 3セット', '2026/10/16 達成', 'id="panel-progress"'], false);
         }
 
         $this->actingAs(User::factory()->create())
@@ -121,17 +121,39 @@ class UserPageTest extends TestCase
             ->all();
     }
 
-    public function test_only_personal_best_section_is_open_initially(): void
+    /**
+     * 表示された状態で出力されるタブのパネル（id の panel- を除いた名前）
+     *
+     * @return list<string>
+     */
+    private function visibleTabPanels(string $html): array
+    {
+        preg_match_all('/<div\b[^>]*role="tabpanel"[^>]*>/u', $html, $matches);
+
+        return collect($matches[0])
+            ->reject(fn (string $tag) => str_contains($tag, 'display: none'))
+            ->map(fn (string $tag) => preg_match('/id="panel-([\w-]+)"/', $tag, $m) ? $m[1] : null)
+            ->values()
+            ->all();
+    }
+
+    public function test_status_sections_are_tabs_and_only_personal_best_is_shown_initially(): void
     {
         $user = User::factory()->create();
 
         $html = $this->actingAs($user)->get(route('users.show', $user))
             ->assertOk()
-            ->assertSee('<details', false)
+            ->assertSeeInOrder(['role="tablist"', '自己ベスト', '最高重量の推移', '休ませる筋肉', '使える筋肉', 'おすすめの種目'], false)
             ->getContent();
 
-        $this->assertSame(['自己ベスト'], $this->openSectionTitles($html));
-        $this->assertSame(7, substr_count($html, '<details'));
+        $this->assertSame(5, substr_count($html, 'role="tab"'));
+        $this->assertSame(5, substr_count($html, 'role="tabpanel"'));
+        $this->assertSame(['best'], $this->visibleTabPanels($html));
+        $this->assertMatchesRegularExpression('/id="tab-best"\s+aria-controls="panel-best"\s+aria-selected="true"/', $html);
+
+        // 記録フォームと記録一覧は開閉式のまま、最初は閉じている
+        $this->assertSame(2, substr_count($html, '<details'));
+        $this->assertSame([], $this->openSectionTitles($html));
     }
 
     public function test_records_section_is_open_when_searching_by_url(): void
@@ -142,7 +164,7 @@ class UserPageTest extends TestCase
             ->assertOk()
             ->getContent();
 
-        $this->assertSame(['自己ベスト', '記録'], $this->openSectionTitles($html));
+        $this->assertSame(['記録'], $this->openSectionTitles($html));
     }
 
     public function test_weight_chart_is_shown_to_owner_and_permitted_user_only(): void
