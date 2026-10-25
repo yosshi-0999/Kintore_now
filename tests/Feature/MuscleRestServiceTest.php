@@ -87,9 +87,10 @@ class MuscleRestServiceTest extends TestCase
         Exercise::factory()->for($legs)->create(['name' => 'スクワット']);
 
         $this->recordWorkout($user, [$chest], now()->subHour()->toDateTimeString(), 2);
-        $service = app(MuscleRestService::class);
+        $overview = app(MuscleRestService::class)->overview($user);
 
-        $this->assertSame([$legs->id], $service->availableMuscles($user)->pluck('id')->all());
-        $this->assertSame(['スクワット'], $service->suggestedExercises($user)->pluck('name')->all());
+        $this->assertSame([$chest->id], $overview['resting']->keys()->all());
+        $this->assertSame([$legs->id], $overview['available']->pluck('id')->all());
+        $this->assertSame(['スクワット'], $overview['suggestions']->pluck('name')->all());
     }
 }

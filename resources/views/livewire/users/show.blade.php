@@ -109,7 +109,6 @@ new class extends Component {
 
     public function with(): array
     {
-        $rest = app(MuscleRestService::class);
         $canView = Gate::allows('viewRecords', $this->user);
 
         if (! $canView) {
@@ -121,9 +120,7 @@ new class extends Component {
             'isSelf' => Auth::user()->is($this->user),
             'personalBests' => app(PersonalBestService::class)->forUser($this->user),
             'weightProgress' => app(WeightProgressService::class)->forUser($this->user),
-            'resting' => $rest->restingMuscles($this->user),
-            'available' => $rest->availableMuscles($this->user),
-            'suggestions' => $rest->suggestedExercises($this->user),
+            ...app(MuscleRestService::class)->overview($this->user),
             'muscles' => Muscle::orderBy('id')->get(),
             'isSearching' => collect($this->searchInput())->filter()->isNotEmpty(),
             // 不正な条件（存在しない筋肉、日付でない文字など）は検索に使わない

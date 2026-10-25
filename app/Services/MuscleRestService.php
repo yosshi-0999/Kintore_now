@@ -74,30 +74,30 @@ class MuscleRestService
     }
 
     /**
-     * 使える筋肉（休息中でない筋肉。記録のない筋肉も含む）。
+     * ユーザーページ用に、休ませる筋肉・使える筋肉・おすすめの種目をまとめて求める。
+     * 休息判定（restingMuscles）は1回だけ行い、3つで使い回す。
      *
-     * @return Collection<int, Muscle>
+     * @return array{
+     *     resting: Collection<int, array{muscle: Muscle, recovers_at: CarbonInterface}>,
+     *     available: Collection<int, Muscle>,
+     *     suggestions: Collection<int, Exercise>,
+     * }
      */
-    public function availableMuscles(User $user, ?CarbonInterface $at = null): Collection
+    public function overview(User $user, ?CarbonInterface $at = null): array
     {
-        $restingIds = $this->restingMuscles($user, $at)->keys();
+        $resting = $this->restingMuscles($user, $at);
+        $restingIds = $resting->keys();
 
-        return Muscle::query()->whereNotIn('id', $restingIds)->orderBy('id')->get();
-    }
-
-    /**
-     * 使える筋肉に効果的な種目（おすすめ）。
-     *
-     * @return Collection<int, Exercise>
-     */
-    public function suggestedExercises(User $user, ?CarbonInterface $at = null): Collection
-    {
-        $restingIds = $this->restingMuscles($user, $at)->keys();
-
-        return Exercise::query()
-            ->whereNotIn('muscle_id', $restingIds)
-            ->with('muscle')
-            ->orderBy('muscle_id')
-            ->get();
+        return [
+            'resting' => $resting,
+            // 使える筋肉（休息中でない筋肉。記録のない筋肉も含む）
+            'available' => Muscle::query()->whereNotIn('id', $restingIds)->orderBy('id')->get(),
+            // 使える筋肉に効果的な種目（おすすめ）
+            'suggestions' => Exercise::query()
+                ->whereNotIn('muscle_id', $restingIds)
+                ->with('muscle')
+                ->orderBy('muscle_id')
+                ->get(),
+        ];
     }
 }
