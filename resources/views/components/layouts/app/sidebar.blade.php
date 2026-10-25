@@ -12,8 +12,17 @@
             </a>
 
             <flux:navlist variant="outline">
-                <flux:navlist.group heading="Platform" class="grid">
-                    <flux:navlist.item icon="home" :href="route('dashboard')" :current="request()->routeIs('dashboard')" wire:navigate>Dashboard</flux:navlist.item>
+                <flux:navlist.group :heading="__('Platform')" class="grid">
+                    <flux:navlist.item icon="home" :href="route('dashboard')" :current="request()->routeIs('dashboard')" wire:navigate>{{ __('Dashboard') }}</flux:navlist.item>
+                </flux:navlist.group>
+
+                <flux:navlist.group heading="筋トレ" class="grid">
+                    <flux:navlist.item icon="user" :href="route('mypage')" :current="request()->routeIs('users.show') && request()->route('user')?->is(auth()->user())" wire:navigate>マイページ</flux:navlist.item>
+                    <flux:navlist.item icon="pencil-square" :href="route('workouts.create')" :current="request()->routeIs('workouts.create')" wire:navigate>記録する</flux:navlist.item>
+                    <flux:navlist.item icon="bell" :href="route('plans.index')" :current="request()->routeIs('plans.*')" wire:navigate>通知プラン</flux:navlist.item>
+                    <flux:navlist.item icon="users" :href="route('users.index')" :current="request()->routeIs('users.index')" wire:navigate>ユーザー一覧</flux:navlist.item>
+                    <flux:navlist.item icon="lock-open" :href="route('permissions.index')" :current="request()->routeIs('permissions.index')" wire:navigate>閲覧許可</flux:navlist.item>
+                    <flux:navlist.item icon="chart-bar" :href="route('ranking.index')" :current="request()->routeIs('ranking.index')" wire:navigate>ランキング</flux:navlist.item>
                 </flux:navlist.group>
             </flux:navlist>
 
@@ -21,11 +30,11 @@
 
             <flux:navlist variant="outline">
                 <flux:navlist.item icon="folder-git-2" href="https://github.com/laravel/livewire-starter-kit" target="_blank">
-                    Repository
+                    {{ __('Repository') }}
                 </flux:navlist.item>
 
                 <flux:navlist.item icon="book-open-text" href="https://laravel.com/docs/starter-kits" target="_blank">
-                    Documentation
+                    {{ __('Documentation') }}
                 </flux:navlist.item>
             </flux:navlist>
 
@@ -60,7 +69,7 @@
                     <flux:menu.separator />
 
                     <flux:menu.radio.group>
-                        <flux:menu.item href="/settings/profile" icon="cog" wire:navigate>Settings</flux:menu.item>
+                        <flux:menu.item href="/settings/profile" icon="cog" wire:navigate>{{ __('Settings') }}</flux:menu.item>
                     </flux:menu.radio.group>
 
                     <flux:menu.separator />
@@ -110,7 +119,7 @@
                     <flux:menu.separator />
 
                     <flux:menu.radio.group>
-                        <flux:menu.item href="/settings/profile" icon="cog" wire:navigate>Settings</flux:menu.item>
+                        <flux:menu.item href="/settings/profile" icon="cog" wire:navigate>{{ __('Settings') }}</flux:menu.item>
                     </flux:menu.radio.group>
 
                     <flux:menu.separator />

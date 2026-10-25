@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Muscle;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -23,5 +24,17 @@ class DashboardTest extends TestCase
 
         $response = $this->get('/dashboard');
         $response->assertStatus(200);
+    }
+
+    public function test_dashboard_links_each_muscle_to_the_workout_form(): void
+    {
+        $chest = Muscle::factory()->create(['name' => '大胸筋']);
+
+        $this->actingAs(User::factory()->create())
+            ->get('/dashboard')
+            ->assertOk()
+            ->assertSee('muscle-map.jpg')
+            ->assertSee(route('workouts.create', ['muscle' => $chest->id]), false)
+            ->assertSee('大胸筋を記録する');
     }
 }
