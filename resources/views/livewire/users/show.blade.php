@@ -4,6 +4,7 @@ use App\Models\Muscle;
 use App\Models\User;
 use App\Services\MuscleRestService;
 use App\Services\PersonalBestService;
+use App\Services\StreakService;
 use App\Services\WeightProgressService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
@@ -119,6 +120,7 @@ new class extends Component {
             'canView' => true,
             'isSelf' => Auth::user()->is($this->user),
             'personalBests' => app(PersonalBestService::class)->forUser($this->user),
+            'streak' => app(StreakService::class)->forUser($this->user),
             'weightProgress' => app(WeightProgressService::class)->forUser($this->user),
             ...app(MuscleRestService::class)->overview($this->user),
             'muscles' => Muscle::orderBy('id')->get(),
@@ -149,6 +151,7 @@ new class extends Component {
         @php
             $tabs = [
                 'best' => '自己ベスト',
+                'streak' => '継続日数',
                 'progress' => '最高重量の推移',
                 'resting' => '休ませる筋肉',
                 'available' => '使える筋肉',
@@ -205,6 +208,32 @@ new class extends Component {
                             </div>
                         @endforeach
                     </div>
+                @endif
+            </div>
+
+            <div wire:ignore.self role="tabpanel" id="panel-streak" aria-labelledby="tab-streak" x-show="tab === 'streak'" style="display: none" class="p-4">
+                @if ($streak['total_days'] === 0)
+                    <flux:text>
+                        {{ $isSelf ? '記録すると、ここに続けている日数が表示されます。' : 'まだ記録がありません。' }}
+                    </flux:text>
+                @else
+                    <div class="grid gap-3 sm:grid-cols-3">
+                        <div class="rounded-lg bg-white/80 p-3 shadow-sm dark:bg-zinc-900/60">
+                            <div class="text-sm font-semibold text-amber-700 dark:text-amber-300">連続記録</div>
+                            <div class="mt-1 text-3xl font-bold">{{ $streak['current'] }}<span class="ml-1 text-base font-medium">日</span></div>
+                        </div>
+                        <div class="rounded-lg bg-white/80 p-3 shadow-sm dark:bg-zinc-900/60">
+                            <div class="text-sm font-semibold text-amber-700 dark:text-amber-300">最長連続</div>
+                            <div class="mt-1 text-3xl font-bold">{{ $streak['longest'] }}<span class="ml-1 text-base font-medium">日</span></div>
+                        </div>
+                        <div class="rounded-lg bg-white/80 p-3 shadow-sm dark:bg-zinc-900/60">
+                            <div class="text-sm font-semibold text-amber-700 dark:text-amber-300">合計</div>
+                            <div class="mt-1 text-3xl font-bold">{{ $streak['total_days'] }}<span class="ml-1 text-base font-medium">日</span></div>
+                        </div>
+                    </div>
+                    <flux:text size="sm" class="mt-3">
+                        最後に記録した日：{{ $streak['last_date']->format('Y/m/d') }}。記録が1件以上ある日を数えます（今日まだ記録していなくても、昨日まで続いていれば連続のままです）。
+                    </flux:text>
                 @endif
             </div>
 

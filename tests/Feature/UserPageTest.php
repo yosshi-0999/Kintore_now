@@ -143,11 +143,11 @@ class UserPageTest extends TestCase
 
         $html = $this->actingAs($user)->get(route('users.show', $user))
             ->assertOk()
-            ->assertSeeInOrder(['role="tablist"', '自己ベスト', '最高重量の推移', '休ませる筋肉', '使える筋肉', 'おすすめの種目'], false)
+            ->assertSeeInOrder(['role="tablist"', '自己ベスト', '継続日数', '最高重量の推移', '休ませる筋肉', '使える筋肉', 'おすすめの種目'], false)
             ->getContent();
 
-        $this->assertSame(5, substr_count($html, 'role="tab"'));
-        $this->assertSame(5, substr_count($html, 'role="tabpanel"'));
+        $this->assertSame(6, substr_count($html, 'role="tab"'));
+        $this->assertSame(6, substr_count($html, 'role="tabpanel"'));
         $this->assertSame(['best'], $this->visibleTabPanels($html));
         $this->assertMatchesRegularExpression('/id="tab-best"\s+aria-controls="panel-best"\s+aria-selected="true"/', $html);
 
